@@ -805,7 +805,6 @@
             const [manualLoc, setManualLoc] = useState(null);
             const [timeTurnerActive, setTimeTurnerActive] = useState(false);
             
-            // Initial Start Time (8:45 AM)
             const INITIAL_START = 8.75;
             const [baseStartTime, setBaseStartTime] = useState(INITIAL_START);
 
@@ -832,11 +831,6 @@
 
             const currentHour = currentTime.getHours() + (currentTime.getMinutes() / 60);
 
-            const activeItemId = useMemo(() => {
-                const item = ITINERARY_DATA.find(i => currentHour >= i.startHour && currentHour < i.endHour);
-                return item ? item.id : null;
-            }, [currentHour]);
-
             const toggleComplete = (id) => {
                 setCompletedItems(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
             };
@@ -846,13 +840,11 @@
                 setBaseStartTime(newStartDecimal);
             };
 
+            // 1. Calculate displayed times (including shifts)
             const displayedItems = useMemo(() => {
                 let items = [...ITINERARY_DATA];
-                
-                // Calculate shift from original itinerary
                 const globalShift = baseStartTime - INITIAL_START;
 
-                // Apply Shift to All Items
                 items = items.map(item => {
                     const newStart = item.startHour + globalShift;
                     const newEnd = item.endHour + globalShift;
@@ -860,11 +852,10 @@
                         ...item,
                         startHour: newStart,
                         endHour: newEnd,
-                        time: decimalToTime(newStart) // Replaces the hardcoded string
+                        time: decimalToTime(newStart)
                     };
                 });
                 
-                // Time Turner Logic overrides everything if active
                 if (view === 'schedule' && timeTurnerActive) {
                     const firstUncheckedIdx = items.findIndex(i => !completedItems.includes(i.id));
                     if (firstUncheckedIdx !== -1) {
@@ -873,13 +864,20 @@
                         items = items.map((item, idx) => {
                             if (idx >= firstUncheckedIdx) {
                                 const newStart = item.startHour + shift;
-                                return { ...item, overrideTime: decimalToTime(newStart) };
+                                // For Time Turner, we update startHour so active logic works
+                                return { 
+                                    ...item, 
+                                    startHour: newStart,
+                                    overrideTime: decimalToTime(newStart) 
+                                };
                             }
                             return item;
                         });
                     }
                 }
 
+                // Sort for Alphabetical/Nearby, but for Schedule we keep ID order (implied chronological)
+                // NOTE: For active logic to work best, we need chronological order.
                 if (view === 'alphabetical') {
                     items.sort((a, b) => a.title.localeCompare(b.title));
                 } else if (view === 'nearby') {
@@ -894,6 +892,31 @@
                 }
                 return items;
             }, [view, manualLoc, timeTurnerActive, currentHour, completedItems, baseStartTime]);
+
+            // 2. Calculate Active Item based on GAP logic
+            // We must use the *chronological* list for this logic
+            const activeItemId = useMemo(() => {
+                // Filter for schedule view logic, or just use original order
+                const chronoItems = [...displayedItems].sort((a, b) => a.id - b.id);
+                
+                for (let i = 0; i < chronoItems.length; i++) {
+                    const item = chronoItems[i];
+                    const nextItem = chronoItems[i + 1];
+                    
+                    // Active if: Current Time >= Item Start AND Current Time < Next Item Start
+                    // Last item is active if Current Time >= Item Start
+                    if (nextItem) {
+                        if (currentHour >= item.startHour && currentHour < nextItem.startHour) {
+                            return item.id;
+                        }
+                    } else {
+                        if (currentHour >= item.startHour) {
+                            return item.id;
+                        }
+                    }
+                }
+                return null;
+            }, [displayedItems, currentHour]);
 
             const progressPercentage = Math.round((completedItems.length / ITINERARY_DATA.length) * 100);
 
@@ -1002,7 +1025,7 @@
 
                         <div className="space-y-6 pb-20">
                             {displayedItems.map((item, index) => {
-                                const isActive = activeItemId === item.id && view === 'schedule';
+                                const isActive = activeItemId === item.id;
                                 
                                 return (
                                     <div key={item.id}>
