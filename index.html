@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+l<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -173,6 +173,12 @@
             padding: 0 10px;
             color: #eab308;
             font-size: 1.2rem;
+        }
+        
+        /* --- Time Input Styling --- */
+        input[type="time"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            cursor: pointer;
         }
     </style>
 </head>
@@ -455,6 +461,20 @@
             const strMinutes = minutes < 10 ? '0' + minutes : minutes;
             return `${hours}:${strMinutes} ${ampm}`;
         }
+        
+        function timeStringToDecimal(timeStr) {
+            const [hours, minutes] = timeStr.split(':').map(Number);
+            return hours + (minutes / 60);
+        }
+        
+        function decimalToInputString(decimal) {
+            let hours = Math.floor(decimal);
+            let minutes = Math.round((decimal - hours) * 60);
+            if (minutes === 60) { hours += 1; minutes = 0; }
+            const h = hours < 10 ? '0'+hours : hours;
+            const m = minutes < 10 ? '0'+minutes : minutes;
+            return `${h}:${m}`;
+        }
 
         function getDistanceFromLatLonInYards(lat1, lon1, lat2, lon2) {
             var R = 6371; 
@@ -510,7 +530,6 @@
                     duration: Math.random() * 3 + 2 + 's'
                 }));
             }, []);
-            
             return (
                 <div className="starfield">
                     {stars.map((s, i) => (
@@ -553,8 +572,9 @@
             </div>
         );
 
-        const ItemCard = ({ item, userLoc, isCompleted, onToggle, showDist, theme, isActive, id, overrideTime }) => {
+        const ItemCard = ({ item, userLoc, isCompleted, onToggle, showDist, theme, isActive, id, overrideTime, isFirstItem, onTimeChange, displayStart }) => {
             const [justChecked, setJustChecked] = useState(false);
+            const [isEditingTime, setIsEditingTime] = useState(false);
 
             const getIcon = (type) => {
                 switch(type) {
@@ -572,6 +592,11 @@
                     setTimeout(() => setJustChecked(false), 600);
                 }
                 onToggle(item.id);
+            };
+
+            const handleTimeChange = (e) => {
+                onTimeChange(e.target.value);
+                setIsEditingTime(false);
             };
 
             const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.mapQuery)}`;
@@ -654,13 +679,35 @@
                         ) : (
                             <div className="flex justify-between items-center mb-2 pb-2 border-b border-gray-800">
                                 <p className="text-base text-gray-400 font-semibold flex items-center gap-2"><Icon name="map-pin" size={14}/> {item.location}</p>
-                                <span className={`font-mono text-base font-bold whitespace-nowrap ${theme.accent}`}>
-                                    {overrideTime ? (
-                                        <span><span className="line-through opacity-40 mr-2 text-sm text-gray-500">{item.time}</span>{overrideTime}</span>
-                                    ) : (
-                                        item.time
+                                <div className="flex items-center gap-2">
+                                    {isFirstItem && !isEditingTime && (
+                                        <button 
+                                            onClick={() => setIsEditingTime(true)}
+                                            className="text-gray-500 hover:text-white transition-colors"
+                                        >
+                                            <Icon name="pen-tool" size={14} />
+                                        </button>
                                     )}
-                                </span>
+                                    
+                                    {isFirstItem && isEditingTime ? (
+                                        <input 
+                                            type="time" 
+                                            defaultValue={decimalToInputString(displayStart)} 
+                                            onBlur={() => setIsEditingTime(false)}
+                                            onChange={handleTimeChange}
+                                            className="bg-gray-800 text-white border border-yellow-600 rounded px-2 py-1 text-sm"
+                                            autoFocus
+                                        />
+                                    ) : (
+                                        <span className={`font-mono text-base font-bold whitespace-nowrap ${theme.accent}`}>
+                                            {overrideTime ? (
+                                                <span><span className="line-through opacity-40 mr-2 text-sm text-gray-500">{item.time}</span>{overrideTime}</span>
+                                            ) : (
+                                                item.time
+                                            )}
+                                        </span>
+                                    )}
+                                </div>
                             </div>
                         )}
                        
@@ -757,6 +804,10 @@
             const [showFinale, setShowFinale] = useState(false);
             const [manualLoc, setManualLoc] = useState(null);
             const [timeTurnerActive, setTimeTurnerActive] = useState(false);
+            
+            // Initial Start Time (8:45 AM)
+            const INITIAL_START = 8.75;
+            const [baseStartTime, setBaseStartTime] = useState(INITIAL_START);
 
             const theme = HOUSES[house];
 
@@ -790,9 +841,30 @@
                 setCompletedItems(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
             };
 
+            const handleStartTimeChange = (newTimeStr) => {
+                const newStartDecimal = timeStringToDecimal(newTimeStr);
+                setBaseStartTime(newStartDecimal);
+            };
+
             const displayedItems = useMemo(() => {
                 let items = [...ITINERARY_DATA];
                 
+                // Calculate shift from original itinerary
+                const globalShift = baseStartTime - INITIAL_START;
+
+                // Apply Shift to All Items
+                items = items.map(item => {
+                    const newStart = item.startHour + globalShift;
+                    const newEnd = item.endHour + globalShift;
+                    return {
+                        ...item,
+                        startHour: newStart,
+                        endHour: newEnd,
+                        time: decimalToTime(newStart) // Replaces the hardcoded string
+                    };
+                });
+                
+                // Time Turner Logic overrides everything if active
                 if (view === 'schedule' && timeTurnerActive) {
                     const firstUncheckedIdx = items.findIndex(i => !completedItems.includes(i.id));
                     if (firstUncheckedIdx !== -1) {
@@ -821,7 +893,7 @@
                     }
                 }
                 return items;
-            }, [view, manualLoc, timeTurnerActive, currentHour, completedItems]);
+            }, [view, manualLoc, timeTurnerActive, currentHour, completedItems, baseStartTime]);
 
             const progressPercentage = Math.round((completedItems.length / ITINERARY_DATA.length) * 100);
 
@@ -934,7 +1006,6 @@
                                 
                                 return (
                                     <div key={item.id}>
-                                        {/* Magical Divider Logic */}
                                         {view === 'schedule' && index > 0 && ITINERARY_DATA[index-1].park !== item.park && (
                                             <MagicDivider />
                                         )}
@@ -949,6 +1020,9 @@
                                             theme={theme}
                                             isActive={isActive}
                                             overrideTime={item.overrideTime}
+                                            isFirstItem={index === 0 && view === 'schedule'}
+                                            displayStart={item.startHour}
+                                            onTimeChange={handleStartTimeChange}
                                         />
                                     </div>
                                 );
