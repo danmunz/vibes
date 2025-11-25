@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Wizarding World Itinerary</title>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Lato:wght@400;700&display=swap" rel="stylesheet">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        body {
+            font-family: 'Lato', sans-serif;
+            background-color: #1a1a1a;
+            color: #e2e8f0;
+        }
+        h1, h2, h3, .font-magic {
+            font-family: 'Cinzel', serif;
+        }
+        .parchment {
+            background-color: #f3e5ab;
+            color: #2c1810;
+        }
+        /* Custom Checkbox Animation */
+        .check-anim {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useMemo } = React;
+
+        // --- Data ---
+        const ITINERARY_DATA = [
+            {
+                id: 1,
+                time: "8:15 AM",
+                title: "Travel & Parking",
+                location: "Universal Parking Garage",
+                description: "Park in main garage. Walk via security -> CityWalk -> USF Gates.",
+                lat: 28.4738,
+                lng: -81.4635,
+                url: "https://www.universalorlando.com/web/en/us/plan-your-visit/hours-information/directions-and-parking",
+                mapQuery: "Universal Orlando Parking Garage",
+                type: "logistics"
+            },
+            {
+                id: 2,
+                time: "8:45 AM",
+                title: "Arrival at Gate",
+                location: "Universal Studios Florida Entrance",
+                description: "Be at the gates by 8:45-8:55. Head straight for London waterfront.",
+                lat: 28.4752, 
+                lng: -81.4670,
+                url: "https://www.universalorlando.com/web/en/us/theme-parks/universal-studios-florida",
+                mapQuery: "Universal Studios Florida Entrance",
+                type: "logistics"
+            },
+            {
+                id: 3,
+                time: "9:00 AM",
+                title: "Ollivanders Wand Experience",
+                location: "Diagon Alley",
+                description: "Do the wand show early. Purchase interactive wand.",
+                lat: 28.4800,
+                lng: -81.4710,
+                url: "https://www.universalorlando.com/web/en/us/things-to-do/shopping/ollivanders-diagon-alley",
+                mapQuery: "Ollivanders Wand Shop Diagon Alley",
+                type: "attraction"
+            },
+            {
+                id: 4,
+                time: "9:20 AM",
+                title: "Explore Diagon Alley",
+                location: "Diagon Alley",
+                description: "Weasleys', Knockturn Alley, Dragon Photo, Interactive Spells.",
+                lat: 28.4798,
+                lng: -81.4708,
+                url: "https://www.universalorlando.com/web/en/us/theme-parks/universal-studios-florida/the-wizarding-world-of-harry-potter-diagon-alley",
+                mapQuery: "Weasleys' Wizard Wheezes Universal Studios",
+                type: "explore"
+            },
+            {
+                id: 5,
+                time: "10:00 AM",
+                title: "Hogwarts Express (to Hogsmeade)",
+                location: "King's Cross Station",
+                description: "Use Express Pass. Travel from London to Hogsmeade.",
+                lat: 28.4794,
+                lng: -81.4703,
+                url: "https://www.universalorlando.com/web/en/us/things-to-do/rides-attractions/hogwarts-express",
+                mapQuery: "Hogwarts Express King's Cross Station",
+                type: "ride"
+            },
+            {
+                id: 6,
+                time: "10:15 AM",
+                title: "Explore Hogsmeade",
+                location: "Hogsmeade Village",
+                description: "Honeydukes, Dervish & Banges, Owl Post. Quick loop.",
+                lat: 28.4735,
+                lng: -81.4732,
+                url: "https://www.universalorlando.com/web/en/us/theme-parks/islands-of-adventure/the-wizarding-world-of-harry-potter-hogsmeade",
+                mapQuery: "The Wizarding World of Harry Potter - Hogsmeade",
+                type: "explore"
+            },
+            {
+                id: 7,
+                time: "10:30 AM",
+                title: "Flight of the Hippogriff",
+                location: "Hogsmeade",
+                description: "Short, gentle coaster. Use Express Pass.",
+                lat: 28.4725,
+                lng: -81.4738,
+                url: "https://www.universalorlando.com/web/en/us/things-to-do/rides-attractions/flight-of-the-hippogriff",
+                mapQuery: "Flight of the Hippogriff Universal Orlando",
+                type: "ride"
+            },
+            {
+                id: 8,
+                time: "11:00 AM",
+                title: "Hagrid's Magical Creatures",
+                location: "Hogsmeade",
+                description: "Big coaster. Use Express Pass. Motorbike or Sidecar?",
+                lat: 28.4732,
+                lng: -81.4740,
+                url: "https://www.universalorlando.com/web/en/us/things-to-do/rides-attractions/hagrids-magical-creatures-motorbike-adventure",
+                mapQuery: "Hagrid's Magical Creatures Motorbike Adventure",
+                type: "ride"
+            },
+            {
+                id: 9,
+                time: "11:35 AM",
+                title: "Forbidden Journey",
+                location: "Hogwarts Castle",
+                description: "Inside Hogwarts. Motion simulation + robotics. Use Express Pass.",
+                lat: 28.4718,
+                lng: -81.4745,
+                url: "https://www.universalorlando.com/web/en/us/things-to-do/rides-attractions/harry-potter-and-the-forbidden-journey",
+                mapQuery: "Harry Potter and the Forbidden Journey",
+                type: "ride"
+            },
+            {
+                id: 10,
+                time: "12:10 PM",
+                title: "Lunch: Three Broomsticks",
+                location: "Hogsmeade",
+                description: "Rotisserie chicken, fish & chips, Butterbeer.",
+                lat: 28.4730,
+                lng: -81.4735,
+                url: "https://www.universalorlando.com/web/en/us/things-to-do/dining/three-broomsticks",
+                mapQuery: "Three Broomsticks Universal Orlando",
+                type: "dining"
+            },
+            {
+                id: 11,
+                time: "12:40 PM",
+                title: "Hogwarts Express (Return)",
+                location: "Hogsmeade Station",
+                description: "Return trip to Diagon Alley (different story).",
+                lat: 28.4741,
+                lng: -81.4727,
+                url: "https://www.universalorlando.com/web/en/us/things-to-do/rides-attractions/hogwarts-express",
+                mapQuery: "Hogwarts Express Hogsmeade Station",
+                type: "ride"
+            },
+            {
+                id: 12,
+                time: "1:00 PM",
+                title: "Shopping & Shows",
+                location: "Diagon Alley",
+                description: "Beedle the Bard, Celestina Warbeck, Magical Menagerie.",
+                lat: 28.4797,
+                lng: -81.4712, 
+                url: "https://www.universalorlando.com/web/en/us/things-to-do/entertainment/celestina-warbeck-and-the-banshees",
+                mapQuery: "Carkitt Market Universal Studios",
+                type: "explore"
+            },
+            {
+                id: 13,
+                time: "1:40 PM",
+                title: "Ice Cream & Photos",
+                location: "Florean Fortescue's",
+                description: "Butterbeer Ice Cream. Knight Bus photos outside.",
+                lat: 28.4799,
+                lng: -81.4709,
+                url: "https://www.universalorlando.com/web/en/us/things-to-do/dining/florean-fortescues-ice-cream-parlour",
+                mapQuery: "Florean Fortescue's Ice-Cream Parlour",
+                type: "dining"
+            },
+            {
+                id: 14,
+                time: "1:55 PM",
+                title: "Exit Park",
+                location: "USF Exit",
+                description: "Head out via London Waterfront.",
+                lat: 28.4752,
+                lng: -81.4670,
+                url: "https://www.universalorlando.com/web/en/us/theme-parks/universal-studios-florida",
+                mapQuery: "Universal Studios Florida",
+                type: "logistics"
+            }
+        ];
+
+        // --- Helper: Haversine Distance ---
+        function getDistanceFromLatLonInMeters(lat1, lon1, lat2, lon2) {
+            var R = 6371; // Radius of the earth in km
+            var dLat = deg2rad(lat2 - lat1);
+            var dLon = deg2rad(lon2 - lon1);
+            var a =
+                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            var d = R * c; 
+            return d * 1000; 
+        }
+
+        function deg2rad(deg) {
+            return deg * (Math.PI / 180);
+        }
+
+        function formatDistance(meters) {
+            if (meters < 1000) return `${Math.round(meters)} m`;
+            return `${(meters / 1000).toFixed(1)} km`;
+        }
+
+        // --- Components ---
+
+        const Icon = ({ name, size = 20, className = "" }) => {
+            useEffect(() => {
+                lucide.createIcons();
+            }, [name]);
+            return <i data-lucide={name} className={className} style={{ width: size, height: size }}></i>;
+        };
+
+        const ItemCard = ({ item, distance, isCompleted, onToggle }) => {
+            const getIcon = (type) => {
+                switch(type) {
+                    case 'ride': return 'train-front';
+                    case 'dining': return 'utensils';
+                    case 'explore': return 'compass';
+                    case 'attraction': return 'wand';
+                    default: return 'map-pin';
+                }
+            };
+
+            const colors = {
+                ride: 'border-red-800 bg-red-900/10',
+                dining: 'border-yellow-600 bg-yellow-900/10',
+                explore: 'border-blue-800 bg-blue-900/10',
+                attraction: 'border-purple-800 bg-purple-900/10',
+                logistics: 'border-gray-600 bg-gray-800/20'
+            };
+            
+            // Build the specific Google Maps Search URL
+            const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.mapQuery)}`;
+
+            return (
+                <div className={`mb-4 p-4 rounded-lg border-l-4 shadow-md bg-gray-800 transition-all duration-300 ${colors[item.type] || 'border-gray-500'} ${isCompleted ? 'opacity-50 grayscale' : 'opacity-100'}`}>
+                    <div className="flex justify-between items-start mb-2">
+                        <div className="flex items-center gap-2 flex-1">
+                            {/* Checkbox */}
+                            <button 
+                                onClick={() => onToggle(item.id)}
+                                className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center check-anim ${
+                                    isCompleted 
+                                    ? 'bg-green-600 border-green-600 text-white' 
+                                    : 'border-gray-500 text-transparent hover:border-yellow-500'
+                                }`}
+                            >
+                                <Icon name="check" size={14} strokeWidth={4} />
+                            </button>
+                            
+                            <div className={isCompleted ? 'line-through decoration-gray-500' : ''}>
+                                <div className="flex items-center gap-2">
+                                    <Icon name={getIcon(item.type)} size={18} className={isCompleted ? 'text-gray-500' : 'text-yellow-500'} />
+                                    <h3 className="font-bold text-lg font-magic leading-tight">{item.title}</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <span className={`font-mono text-sm whitespace-nowrap ml-2 ${isCompleted ? 'text-gray-500' : 'text-yellow-500'}`}>{item.time}</span>
+                    </div>
+                    
+                    <div className="pl-8">
+                        <p className="text-sm text-gray-400 mb-1">{item.location}</p>
+                        <p className="text-sm mb-3 italic opacity-90">{item.description}</p>
+                        
+                        {distance && (
+                            <div className="mb-3 flex items-center gap-1 text-xs text-green-400 font-bold">
+                                <Icon name="navigation" size={12} />
+                                {formatDistance(distance)} away
+                            </div>
+                        )}
+
+                        <div className="flex gap-3 mt-2">
+                            <a href={item.url} target="_blank" className="flex-1 bg-gray-700 hover:bg-gray-600 text-center py-2 rounded text-sm font-semibold transition-colors flex justify-center items-center gap-2">
+                                <Icon name="info" size={14} /> Official Info
+                            </a>
+                            <a href={mapsUrl} target="_blank" className="flex-1 bg-blue-700 hover:bg-blue-600 text-center py-2 rounded text-sm font-semibold transition-colors flex justify-center items-center gap-2">
+                                <Icon name="map" size={14} /> Maps
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [view, setView] = useState('schedule');
+            const [userLoc, setUserLoc] = useState(null);
+            const [geoError, setGeoError] = useState(null);
+            
+            // Completion State with LocalStorage Persistence
+            const [completedItems, setCompletedItems] = useState(() => {
+                try {
+                    const saved = localStorage.getItem('wizard_progress');
+                    return saved ? JSON.parse(saved) : [];
+                } catch (e) {
+                    return [];
+                }
+            });
+
+            // Save to LocalStorage whenever completed items change
+            useEffect(() => {
+                localStorage.setItem('wizard_progress', JSON.stringify(completedItems));
+            }, [completedItems]);
+
+            const toggleComplete = (id) => {
+                setCompletedItems(prev => {
+                    if (prev.includes(id)) {
+                        return prev.filter(itemId => itemId !== id);
+                    } else {
+                        return [...prev, id];
+                    }
+                });
+            };
+
+            // Get Location
+            const updateLocation = () => {
+                if ("geolocation" in navigator) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            setUserLoc({
+                                lat: position.coords.latitude,
+                                lng: position.coords.longitude
+                            });
+                            setGeoError(null);
+                        },
+                        (error) => {
+                            console.error("Geo error:", error);
+                            setGeoError("Location access needed for 'Nearby' view.");
+                        },
+                        { enableHighAccuracy: true }
+                    );
+                } else {
+                    setGeoError("Geolocation not supported by this browser.");
+                }
+            };
+
+            useEffect(() => {
+                updateLocation();
+                const interval = setInterval(updateLocation, 60000);
+                return () => clearInterval(interval);
+            }, []);
+
+            // Sort Data
+            const displayedItems = useMemo(() => {
+                let items = [...ITINERARY_DATA];
+                
+                if (view === 'alphabetical') {
+                    items.sort((a, b) => a.title.localeCompare(b.title));
+                } else if (view === 'nearby' && userLoc) {
+                    items = items.map(item => ({
+                        ...item,
+                        distance: getDistanceFromLatLonInMeters(userLoc.lat, userLoc.lng, item.lat, item.lng)
+                    })).sort((a, b) => a.distance - b.distance);
+                }
+                return items;
+            }, [view, userLoc]);
+
+            // Calculate Progress
+            const progressPercentage = Math.round((completedItems.length / ITINERARY_DATA.length) * 100);
+
+            return (
+                <div className="min-h-screen pb-20">
+                    {/* Header */}
+                    <header className="bg-red-900 text-yellow-500 p-4 sticky top-0 z-50 shadow-lg border-b-4 border-yellow-600">
+                        <div className="flex justify-between items-center mb-1">
+                            <h1 className="text-xl font-bold tracking-wider">Potter Guide</h1>
+                            <div className="text-xs font-mono bg-black/30 px-2 py-1 rounded">
+                                {completedItems.length}/{ITINERARY_DATA.length} Done
+                            </div>
+                        </div>
+                        {/* Progress Bar */}
+                        <div className="w-full bg-red-950 h-1.5 rounded-full overflow-hidden">
+                            <div 
+                                className="bg-yellow-500 h-full transition-all duration-500" 
+                                style={{ width: `${progressPercentage}%` }}
+                            ></div>
+                        </div>
+                    </header>
+
+                    {/* View Switcher */}
+                    <div className="bg-gray-900 p-2 flex gap-2 sticky top-20 z-40 shadow-md">
+                        {['schedule', 'alphabetical', 'nearby'].map((v) => (
+                            <button
+                                key={v}
+                                onClick={() => {
+                                    setView(v);
+                                    if(v === 'nearby' && !userLoc) updateLocation();
+                                }}
+                                className={`flex-1 py-2 text-sm font-bold uppercase tracking-wide rounded transition-all ${
+                                    view === v 
+                                    ? 'bg-yellow-600 text-gray-900 shadow-[0_0_10px_rgba(202,138,4,0.5)]' 
+                                    : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                                }`}
+                            >
+                                {v}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Content */}
+                    <main className="p-4 max-w-2xl mx-auto">
+                        
+                        {/* Map Error Message (If nearby selected but no geo) */}
+                        {view === 'nearby' && geoError && (
+                            <div className="bg-red-900/50 border border-red-500 p-4 rounded text-center mb-6">
+                                <p className="text-sm">{geoError}</p>
+                                <button onClick={updateLocation} className="mt-2 bg-red-700 px-4 py-2 rounded text-sm font-bold">Retry Permission</button>
+                            </div>
+                        )}
+
+                        {/* List */}
+                        <div className="space-y-4">
+                            {displayedItems.map((item) => (
+                                <ItemCard 
+                                    key={item.id} 
+                                    item={item} 
+                                    distance={view === 'nearby' ? item.distance : null}
+                                    isCompleted={completedItems.includes(item.id)}
+                                    onToggle={toggleComplete}
+                                />
+                            ))}
+                        </div>
+                        
+                        {/* Footer Spacer for mobile navs */}
+                        <div className="h-10"></div>
+                    </main>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
