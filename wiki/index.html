@@ -1,8 +1,9 @@
+```html
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Deep-Time & Mind-Blowing Wikipedia Reading List</title>
+  <title>Themed Wikipedia Lists — Deep Time & Weird History</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
     :root {
@@ -10,6 +11,7 @@
       --bg-alt: #0d101f;
       --accent: #ffcc4d;
       --accent-soft: #7dd3fc;
+      --accent-danger: #f97373;
       --text: #f9fafb;
       --muted: #9ca3af;
       --border: #1f2933;
@@ -25,7 +27,7 @@
       padding: 24px 14px 40px;
     }
     .wrap {
-      max-width: 860px;
+      max-width: 960px;
       margin: 0 auto;
       background: linear-gradient(145deg, var(--bg), var(--bg-alt));
       border-radius: 16px;
@@ -55,34 +57,83 @@
       font-size: 14px;
       color: var(--muted);
     }
-    .tier-nav {
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .random-wrap {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
-      margin: 10px 0 4px;
+      align-items: center;
     }
-    .tier-nav a {
-      font-size: 12px;
-      text-decoration: none;
-      color: var(--accent-soft);
-      padding: 5px 9px;
+    button {
+      cursor: pointer;
+    }
+    #randomBtn {
+      padding: 7px 12px;
       border-radius: 999px;
-      border: 1px solid rgba(148,163,184,0.5);
-      background: rgba(15,23,42,0.7);
+      border: 1px solid var(--accent);
+      background: radial-gradient(circle at top left, #fde68a 0, #78350f 60%);
+      color: #111827;
+      font-size: 13px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.4);
     }
-    .tier-nav a:hover {
+    #randomBtn span.dice {
+      font-size: 16px;
+    }
+    #randomInfo {
+      font-size: 12px;
+      color: var(--muted);
+      min-height: 1.2em;
+    }
+    .tab-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .tab-button {
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.6);
+      background: rgba(15,23,42,0.7);
+      color: var(--accent-soft);
+      font-size: 12px;
+      padding: 6px 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .tab-button span.icon {
+      font-size: 14px;
+    }
+    .tab-button.active {
+      background: rgba(15,23,42,1);
       border-color: var(--accent);
       color: var(--accent);
-      background: rgba(15,23,42,1);
     }
-    section {
+
+    /* Tab panels */
+    .tab-panel {
+      display: none;
       margin-top: 18px;
-      padding-top: 16px;
+      padding-top: 14px;
       border-top: 1px dashed var(--border);
     }
+    .tab-panel.active {
+      display: block;
+    }
+
     h2 {
       margin: 0 0 4px;
-      font-size: 16px;
+      font-size: 17px;
       display: flex;
       align-items: baseline;
       gap: 6px;
@@ -98,6 +149,11 @@
       color: var(--muted);
       margin: 0 0 6px;
     }
+    h3 {
+      margin: 14px 0 4px;
+      font-size: 14px;
+      color: var(--accent-soft);
+    }
     ul.article-list {
       list-style: none;
       padding-left: 0;
@@ -108,11 +164,11 @@
       margin: 4px 0;
       padding: 4px 0;
     }
-    ul.article-list a {
+    a.article-link {
       color: var(--accent);
       text-decoration: none;
     }
-    ul.article-list a:hover {
+    a.article-link:hover {
       text-decoration: underline;
     }
     .tagline {
@@ -127,9 +183,18 @@
       font-size: 11px;
       color: var(--muted);
     }
+    code {
+      background: rgba(15,23,42,0.9);
+      padding: 2px 4px;
+      border-radius: 4px;
+      font-size: 11px;
+    }
     @media (min-width: 700px) {
       .wrap {
         padding: 24px 28px 30px;
+      }
+      #randomInfo {
+        max-width: 420px;
       }
     }
   </style>
@@ -137,320 +202,750 @@
 <body>
   <div class="wrap">
     <header>
-      <h1><span class="emoji">🌀</span><span>Deep-Time & Mind-Blowing Wikipedia Hub</span></h1>
-      <p>A personal launchpad starting from <strong>“Timeline of the Far Future”</strong> and fanning out into increasingly reality-melting topics.</p>
-      <p><strong>How to use:</strong> Start at Tier 1 for a gentle warm-up, or jump straight to Tier 4 if you want maximum existential vertigo.</p>
-      <div class="tier-nav">
-        <a href="#tier4">Tier 4 · Maximum Brain Melt</a>
-        <a href="#tier3">Tier 3 · High Cosmic Weirdness</a>
-        <a href="#tier2">Tier 2 · Big, Concrete Catastrophes</a>
-        <a href="#tier1">Tier 1 · Gentle On-Ramp</a>
+      <h1><span class="emoji">📚</span><span>Themed Wikipedia Rabbit Holes</span></h1>
+      <p>A personal launchpad for curated Wikipedia themes: deep-time cosmology, bizarre historical screwups, and more as you invent them.</p>
+      <div class="controls">
+        <div class="random-wrap">
+          <button id="randomBtn" type="button">
+            <span class="dice">🎲</span>
+            <span>Random Article</span>
+          </button>
+          <div id="randomInfo"></div>
+        </div>
+        <div class="tab-bar">
+          <!-- To add a new list: add another button + panel with matching data-tab / id -->
+          <button class="tab-button active" data-tab="deep-time">
+            <span class="icon">🌀</span><span>Deep Time & Cosmic Futures</span>
+          </button>
+          <button class="tab-button" data-tab="weird-history">
+            <span class="icon">🤡</span><span>Weird History & WTF Events</span>
+          </button>
+        </div>
       </div>
     </header>
 
-    <!-- TIER 4 -->
-    <section id="tier4">
-      <div class="tier-label">Tier 4</div>
-      <h2>Maximum Brain Melt 🧠✨</h2>
-      <p class="tier-note">Reality feels different after a few of these. Deep time, probability nightmares, and universe-scale weirdness.</p>
-      <ul class="article-list">
-        <li>
-          <a href="https://en.wikipedia.org/wiki/Timeline_of_the_far_future" target="_blank" rel="noopener">
-            Timeline of the far future
-          </a>
-          <span class="tagline">Granddaddy of deep-time timelines; everything spirals out from here.</span>
-        </li>
-        <li>
-          <a href="https://en.wikipedia.org/wiki/Future_of_an_expanding_universe" target="_blank" rel="noopener">
-            Future of an expanding universe
-          </a>
-          <span class="tagline">Step-by-step itinerary for a universe that never stops stretching.</span>
-        </li>
-        <li>
-          <a href="https://en.wikipedia.org/wiki/Heat_death_of_the_universe" target="_blank" rel="noopener">
-            Heat death of the universe
-          </a>
-          <span class="tagline">The slow, cold fade into maximal entropy.</span>
-        </li>
-        <li>
-          <a href="https://en.wikipedia.org/wiki/Ultimate_fate_of_the_universe" target="_blank" rel="noopener">
-            Ultimate fate of the universe
-          </a>
-          <span class="tagline">All the main endgame scenarios in one place.</span>
-        </li>
-        <li>
-          <a href="https://en.wikipedia.org/wiki/Vacuum_metastability_event" target="_blank" rel="noopener">
-            Vacuum metastability event
-          </a>
-          <span class="tagline">A quantum bubble of instant oblivion expanding at light speed. Fun!</span>
-        </li>
-        <li>
-          <a href="https://en.wikipedia.org/wiki/Boltzmann_brain" target="_blank" rel="noopener">
-            Boltzmann brain
-          </a>
-          <span class="tagline">Are you a freak entropy fluctuation having fake memories? Don’t think too hard about it.</span>
-        </li>
-        <li>
-          <a href="https://en.wikipedia.org/wiki/Poincar%C3%A9_recurrence_theorem" target="_blank" rel="noopener">
-            Poincaré recurrence theorem
-          </a>
-          <span class="tagline">Given enough time, systems almost surely repeat. Eventually.</span>
-        </li>
-        <li>
-          <a href="https://en.wikipedia.org/wiki/False_vacuum" target="_blank" rel="noopener">
-            False vacuum
-          </a>
-          <span class="tagline">If the universe is in the wrong vacuum state, everything is… provisional.</span>
-        </li>
-        <li>
-          <a href="https://en.wikipedia.org/wiki/Big_Rip" target="_blank" rel="noopener">
-            Big Rip
-          </a>
-          <span class="tagline">Dark energy cranks up, and even atoms eventually get torn apart.</span>
-        </li>
-        <li>
-          <a href="https://en.wikipedia.org/wiki/Simulation_hypothesis" target="_blank" rel="noopener">
-            Simulation hypothesis
-          </a>
-          <span class="tagline">The universe as someone else’s compute bill.</span>
-        </li>
-        <li>
-          <a href="https://en.wikipedia.org/wiki/Great_Filter" target="_blank" rel="noopener">
-            Great Filter
-          </a>
-          <span class="tagline">Some step between atoms and galaxy-spanning civs is nearly impossible. Where is it?</span>
-        </li>
-        <li>
-          <a href="https://en.wikipedia.org/wiki/Dark_forest_hypothesis" target="_blank" rel="noopener">
-            Dark forest hypothesis
-          </a>
-          <span class="tagline">The cosmos as a silent forest where everyone hides to avoid being destroyed.</span>
-        </li>
-        <li>
-          <a href="https://en.wikipedia.org/wiki/Multiverse" target="_blank" rel="noopener">
-            Multiverse
-          </a>
-          <span class="tagline">Not just one universe, but a whole ensemble of them.</span>
-        </li>
-        <li>
-          <a href="https://en.wikipedia.org/wiki/Eternal_inflation" target="_blank" rel="noopener">
-            Eternal inflation
-          </a>
-          <span class="tagline">Bubble universes budding off forever in an inflating background.</span>
-        </li>
-      </ul>
+    <!-- TAB: DEEP TIME -->
+    <section id="deep-time" class="tab-panel active">
+      <div class="tier-label">Tiered by mind-blowingness</div>
+      <p class="tier-note">Start at Tier 1 for a gentle warm-up, or go straight to Tier 4 if you want immediate existential vertigo.</p>
+
+      <!-- Tier 4 -->
+      <section>
+        <h2>Tier 4 · Maximum Brain Melt 🧠✨</h2>
+        <p class="tier-note">Reality feels different after a few of these. Deep time, probability nightmares, and universe-scale weirdness.</p>
+        <ul class="article-list">
+          <li>
+            <a class="article-link" href="https://en.wikipedia.org/wiki/Timeline_of_the_far_future" target="_blank" rel="noopener">
+              Timeline of the far future
+            </a>
+            <span class="tagline">Granddaddy of deep-time timelines; everything spirals out from here.</span>
+          </li>
+          <li>
+            <a class="article-link" href="https://en.wikipedia.org/wiki/Future_of_an_expanding_universe" target="_blank" rel="noopener">
+              Future of an expanding universe
+            </a>
+            <span class="tagline">Step-by-step itinerary for a universe that never stops stretching.</span>
+          </li>
+          <li>
+            <a class="article-link" href="https://en.wikipedia.org/wiki/Heat_death_of_the_universe" target="_blank" rel="noopener">
+              Heat death of the universe
+            </a>
+            <span class="tagline">The slow, cold fade into maximal entropy.</span>
+          </li>
+          <li>
+            <a class="article-link" href="https://en.wikipedia.org/wiki/Ultimate_fate_of_the_universe" target="_blank" rel="noopener">
+              Ultimate fate of the universe
+            </a>
+            <span class="tagline">All the main endgame scenarios in one place.</span>
+          </li>
+          <li>
+            <a class="article-link" href="https://en.wikipedia.org/wiki/Vacuum_metastability_event" target="_blank" rel="noopener">
+              Vacuum metastability event
+            </a>
+            <span class="tagline">A quantum bubble of instant oblivion expanding at light speed. Fun!</span>
+          </li>
+          <li>
+            <a class="article-link" href="https://en.wikipedia.org/wiki/Boltzmann_brain" target="_blank" rel="noopener">
+              Boltzmann brain
+            </a>
+            <span class="tagline">Are you a freak entropy fluctuation having fake memories? Don’t think too hard about it.</span>
+          </li>
+          <li>
+            <a class="article-link" href="https://en.wikipedia.org/wiki/Poincar%C3%A9_recurrence_theorem" target="_blank" rel="noopener">
+              Poincaré recurrence theorem
+            </a>
+            <span class="tagline">Given enough time, systems almost surely repeat. Eventually.</span>
+          </li>
+          <li>
+            <a class="article-link" href="https://en.wikipedia.org/wiki/False_vacuum" target="_blank" rel="noopener">
+              False vacuum
+            </a>
+            <span class="tagline">If the universe is in the wrong vacuum state, everything is… provisional.</span>
+          </li>
+          <li>
+            <a class="article-link" href="https://en.wikipedia.org/wiki/Big_Rip" target="_blank" rel="noopener">
+              Big Rip
+            </a>
+            <span class="tagline">Dark energy cranks up, and even atoms eventually get torn apart.</span>
+          </li>
+          <li>
+            <a class="article-link" href="https://en.wikipedia.org/wiki/Simulation_hypothesis" target="_blank" rel="noopener">
+              Simulation hypothesis
+            </a>
+            <span class="tagline">The universe as someone else’s compute bill.</span>
+          </li>
+          <li>
+            <a class="article-link" href="https://en.wikipedia.org/wiki/Great_Filter" target="_blank" rel="noopener">
+              Great Filter
+            </a>
+            <span class="tagline">Some step between atoms and galaxy-spanning civs is nearly impossible. Where is it?</span>
+          </li>
+          <li>
+            <a class="article-link" href="https://en.wikipedia.org/wiki/Dark_forest_hypothesis" target="_blank" rel="noopener">
+              Dark forest hypothesis
+            </a>
+            <span class="tagline">The cosmos as a silent forest where everyone hides to avoid being destroyed.</span>
+          </li>
+          <li>
+            <a class="article-link" href="https://en.wikipedia.org/wiki/Multiverse" target="_blank" rel="noopener">
+              Multiverse
+            </a>
+            <span class="tagline">Not just one universe, but a whole ensemble of them.</span>
+          </li>
+          <li>
+            <a class="article-link" href="https://en.wikipedia.org/wiki/Eternal_inflation" target="_blank" rel="noopener">
+              Eternal inflation
+            </a>
+            <span class="tagline">Bubble universes budding off forever in an inflating background.</span>
+          </li>
+        </ul>
+      </section>
+
+      <!-- Tier 3 -->
+      <section>
+        <h2>Tier 3 · High Cosmic Weirdness 🌌</h2>
+        <p class="tier-note">Cosmology, megastructures, and existential risks at civilizational scale.</p>
+        <ul class="article-list">
+          <li>
+            <a class="article-link" href="https://en.wikipedia.org/wiki/Future_of_Earth" target="_blank" rel="noopener">
+              Future of Earth
+            </a>
+            <span class="tagline">How our planet changes as the Sun evolves.</span>
+          </li>
+          <li>
+            <a class="article-link" href="https://en.wikipedia.org/wiki/Future_of_the_Solar_System" target="_blank" rel="noopener">
+              Future of the Solar System
+            </a>
+            <span class="tagline">Orbital chaos, stellar aging, and planetary fates.</span>
+          </li>
+          <li>
+            <a class="article-link" href="https://en.wikipedia.org/wiki/Timeline_of_cosmological_epochs" target="_blank" rel="noopener">
+              Timeline of cosmological epochs
+            </a>
+            <span class="tagline">From Planck time to heat death, in labeled phases.</span>
+          </li>
+          <li>
+            <a class="article-link" href="https://en.wikipedia.org/wiki/Hawking_radiation" target="_blank" rel="noopener">
+              Hawking radiation
+            </a>
+            <span class="tagline">How black holes slowly evaporate over absurd timescales.</span>
+          </li>
+          <li>
+            <a class="article-link" href="https://en.wikipedia.org/wiki/Proton_decay" target="_blank" rel="noopener">
+              Proton decay
+            </a>
+            <span class="tagline">If protons are unstable, everything solid is on a ticking clock.</span>
+          </li>
+          <li>
+            <a class="article-link" href="https://en.wikipedia.org/wiki/Stellar_evolution" target="_blank" rel="noopener">
+              Stellar evolution
+            </a>
+            <span class="tagline">The life stories of stars from birth cloud to corpse.</span>
+          </li>
+          <li>
+            <a class="article-link" href="https://en.wikipedia.org/wiki/Kardashev_scale" target="_blank" rel="noopener">
+              Kardashev scale
+            </a>
+            <span class="tagline">Classifying civilizations by how much energy they can harness.</span>
+          </li>
+          <li>
+            <a class="article-link" href="https://en.wikipedia.org/wiki/Dyson_sphere" target="_blank" rel="noopener">
+              Dyson sphere
+            </a>
+            <span class="tagline">A star completely shrouded in infrastructure to catch its energy.</span>
+          </li>
+          <li>
+            <a class="article-link" href="https://en.wikipedia.org/wiki/Matrioshka_brain" target="_blank" rel="noopener">
+              Matrioshka brain
+            </a>
+            <span class="tagline">Layered Dyson shells dedicated entirely to computation.</span>
+          </li>
+          <li>
+            <a class="article-link" href="https://en.wikipedia.org/wiki/Space_colonization" target="_blank" rel="noopener">
+              Space colonization
+            </a>
+            <span class="tagline">How humans (or post-humans) might spread beyond Earth.</span>
+          </li>
+          <li>
+            <a class="article-link" href="https://en.wikipedia.org/wiki/Technological_singularity" target="_blank" rel="noopener">
+              Technological singularity
+            </a>
+            <span class="tagline">Runaway intelligence growth and the hazy before/after line.</span>
+          </li>
+          <li>
+            <a class="article-link" href="https://en.wikipedia.org/wiki/Global_catastrophic_risk" target="_blank" rel="noopener">
+              Global catastrophic risk
+            </a>
+            <span class="tagline">The short list of ways civilization could be permanently wrecked.</span>
+          </li>
+          <li>
+            <a class="article-link" href="https://en.wikipedia.org/wiki/Human_extinction" target="_blank" rel="noopener">
+              Human extinction
+            </a>
+            <span class="tagline">Serious survey of how we might end.</span>
+          </li>
+          <li>
+            <a class="article-link" href="https://en.wikipedia.org/wiki/Fermi_paradox" target="_blank" rel="noopener">
+              Fermi paradox
+            </a>
+            <span class="tagline">“Where is everybody?” plus many unsettling possible answers.</span>
+          </li>
+          <li>
+            <a class="article-link" href="https://en.wikipedia.org/wiki/Kessler_syndrome" target="_blank" rel="noopener">
+              Kessler syndrome
+            </a>
+            <span class="tagline">Satellite collisions cascade until orbit becomes unusable.</span>
+          </li>
+        </ul>
+      </section>
+
+      <!-- Tier 2 -->
+      <section>
+        <h2>Tier 2 · Big, Concrete Catastrophes 🌋</h2>
+        <p class="tier-note">Geology, extinction events, and cosmic hits that actually happened (or could). Less abstract, still huge.</p>
+        <ul class="article-list">
+          <li>
+            <a class="article-link" href="https://en.wikipedia.org/wiki/Timeline_of_natural_history" target="_blank" rel="noopener">
+              Timeline of natural history
+            </a>
+            <span class="tagline">From Earth’s formation to now, in one absurdly long scroll.</span>
+          </li>
+          <li>
+            <a class="article-link" href="https://en.wikipedia.org/wiki/Snowball_Earth" target="_blank" rel="noopener">
+              Snowball Earth
+            </a>
+            <span class="tagline">When the planet may have frozen almost entirely over.</span>
+          </li>
+          <li>
+            <a class="article-link" href="https://en.wikipedia.org/wiki/Great_Oxidation_Event" target="_blank" rel="noopener">
+              Great Oxidation Event
+            </a>
+            <span class="tagline">Life changes the atmosphere and nearly wipes itself out.</span>
+          </li>
+          <li>
+            <a class="article-link" href="https://en.wikipedia.org/wiki/Chicxulub_impactor" target="_blank" rel="noopener">
+              Chicxulub impactor
+            </a>
+            <span class="tagline">The rock that helped end the non-avian dinosaurs.</span>
+          </li>
+          <li>
+            <a class="article-link" href="https://en.wikipedia.org/wiki/Quaternary_extinction_event" target="_blank" rel="noopener">
+              Quaternary extinction event
+            </a>
+            <span class="tagline">The relatively recent wave of megafaunal extinctions.</span>
+          </li>
+          <li>
+            <a class="article-link" href="https://en.wikipedia.org/wiki/Toba_catastrophe_theory" target="_blank" rel="noopener">
+              Toba catastrophe theory
+            </a>
+            <span class="tagline">Supervolcano, bottlenecked humanity, and climate chaos.</span>
+          </li>
+          <li>
+            <a class="article-link" href="https://en.wikipedia.org/wiki/Gamma-ray_burst" target="_blank" rel="noopener">
+              Gamma-ray burst
+            </a>
+            <span class="tagline">Enormous cosmic blasts that could sterilize planets at range.</span>
+          </li>
+          <li>
+            <a class="article-link" href="https://en.wikipedia.org/wiki/Planetary_migration" target="_blank" rel="noopener">
+              Planetary migration
+            </a>
+            <span class="tagline">Planets don’t always stay where they formed; gravity gets weird.</span>
+          </li>
+        </ul>
+      </section>
+
+      <!-- Tier 1 -->
+      <section>
+        <h2>Tier 1 · Gentle On-Ramp & Long-Term Thinking 🧭</h2>
+        <p class="tier-note">Still fascinating, less likely to induce immediate existential crisis. Good starting points or palate cleansers.</p>
+        <ul class="article-list">
+          <li>
+            <a class="article-link" href="https://en.wikipedia.org/wiki/Timeline_of_the_near_future" target="_blank" rel="noopener">
+              Timeline of the near future
+            </a>
+            <span class="tagline">Upcoming eclipses, missions, and tech milestones on a human timescale.</span>
+          </li>
+          <li>
+            <a class="article-link" href="https://en.wikipedia.org/wiki/Year_2038_problem" target="_blank" rel="noopener">
+              Year 2038 problem
+            </a>
+            <span class="tagline">Unix time overflow: a smaller, geekier cousin of Y2K.</span>
+          </li>
+          <li>
+            <a class="article-link" href="https://en.wikipedia.org/wiki/Long_Now_Foundation" target="_blank" rel="noopener">
+              Long Now Foundation
+            </a>
+            <span class="tagline">A group trying to get humans to think on 10,000-year horizons.</span>
+          </li>
+          <li>
+            <a class="article-link" href="https://en.wikipedia.org/wiki/Clock_of_the_Long_Now" target="_blank" rel="noopener">
+              Clock of the Long Now
+            </a>
+            <span class="tagline">A mechanical clock designed to tick for ten millennia.</span>
+          </li>
+          <li>
+            <a class="article-link" href="https://en.wikipedia.org/wiki/Voyager_Golden_Record" target="_blank" rel="noopener">
+              Voyager Golden Record
+            </a>
+            <span class="tagline">A time capsule of Earth sailing through interstellar space.</span>
+          </li>
+          <li>
+            <a class="article-link" href="https://en.wikipedia.org/wiki/List_of_unsolved_problems_in_physics" target="_blank" rel="noopener">
+              List of unsolved problems in physics
+            </a>
+            <span class="tagline">A menu of mysteries that define how incomplete our understanding still is.</span>
+          </li>
+        </ul>
+      </section>
+
+      <div class="meta">
+        <p>Tip: when you finish a page, follow its “See also” links to extend the rabbit hole. This tab is your <em>deep time & cosmic futures</em> hub.</p>
+      </div>
     </section>
 
-    <!-- TIER 3 -->
-    <section id="tier3">
-      <div class="tier-label">Tier 3</div>
-      <h2>High Cosmic Weirdness 🌌</h2>
-      <p class="tier-note">Cosmology, megastructures, and existential risks at civilizational scale.</p>
-      <ul class="article-list">
-        <li>
-          <a href="https://en.wikipedia.org/wiki/Future_of_Earth" target="_blank" rel="noopener">
-            Future of Earth
-          </a>
-          <span class="tagline">How our planet changes as the Sun evolves.</span>
-        </li>
-        <li>
-          <a href="https://en.wikipedia.org/wiki/Future_of_the_Solar_System" target="_blank" rel="noopener">
-            Future of the Solar System
-          </a>
-          <span class="tagline">Orbital chaos, stellar aging, and planetary fates.</span>
-        </li>
-        <li>
-          <a href="https://en.wikipedia.org/wiki/Timeline_of_cosmological_epochs" target="_blank" rel="noopener">
-            Timeline of cosmological epochs
-          </a>
-          <span class="tagline">From Planck time to heat death, in labeled phases.</span>
-        </li>
-        <li>
-          <a href="https://en.wikipedia.org/wiki/Hawking_radiation" target="_blank" rel="noopener">
-            Hawking radiation
-          </a>
-          <span class="tagline">How black holes slowly evaporate over absurd timescales.</span>
-        </li>
-        <li>
-          <a href="https://en.wikipedia.org/wiki/Proton_decay" target="_blank" rel="noopener">
-            Proton decay
-          </a>
-          <span class="tagline">If protons are unstable, everything solid is on a ticking clock.</span>
-        </li>
-        <li>
-          <a href="https://en.wikipedia.org/wiki/Stellar_evolution" target="_blank" rel="noopener">
-            Stellar evolution
-          </a>
-          <span class="tagline">The life stories of stars from birth cloud to corpse.</span>
-        </li>
-        <li>
-          <a href="https://en.wikipedia.org/wiki/Kardashev_scale" target="_blank" rel="noopener">
-            Kardashev scale
-          </a>
-          <span class="tagline">Classifying civilizations by how much energy they can harness.</span>
-        </li>
-        <li>
-          <a href="https://en.wikipedia.org/wiki/Dyson_sphere" target="_blank" rel="noopener">
-            Dyson sphere
-          </a>
-          <span class="tagline">A star completely shrouded in infrastructure to catch its energy.</span>
-        </li>
-        <li>
-          <a href="https://en.wikipedia.org/wiki/Matrioshka_brain" target="_blank" rel="noopener">
-            Matrioshka brain
-          </a>
-          <span class="tagline">Layered Dyson shells dedicated entirely to computation.</span>
-        </li>
-        <li>
-          <a href="https://en.wikipedia.org/wiki/Space_colonization" target="_blank" rel="noopener">
-            Space colonization
-          </a>
-          <span class="tagline">How humans (or post-humans) might spread beyond Earth.</span>
-        </li>
-        <li>
-          <a href="https://en.wikipedia.org/wiki/Technological_singularity" target="_blank" rel="noopener">
-            Technological singularity
-          </a>
-          <span class="tagline">Runaway intelligence growth and the hazy before/after line.</span>
-        </li>
-        <li>
-          <a href="https://en.wikipedia.org/wiki/Global_catastrophic_risk" target="_blank" rel="noopener">
-            Global catastrophic risk
-          </a>
-          <span class="tagline">The short list of ways civilization could be permanently wrecked.</span>
-        </li>
-        <li>
-          <a href="https://en.wikipedia.org/wiki/Human_extinction" target="_blank" rel="noopener">
-            Human extinction
-          </a>
-          <span class="tagline">Serious survey of how we might end.</span>
-        </li>
-        <li>
-          <a href="https://en.wikipedia.org/wiki/Fermi_paradox" target="_blank" rel="noopener">
-            Fermi paradox
-          </a>
-          <span class="tagline">“Where is everybody?” plus many unsettling possible answers.</span>
-        </li>
-        <li>
-          <a href="https://en.wikipedia.org/wiki/Kessler_syndrome" target="_blank" rel="noopener">
-            Kessler syndrome
-          </a>
-          <span class="tagline">Satellite collisions cascade until orbit becomes unusable.</span>
-        </li>
-      </ul>
-    </section>
+    <!-- TAB: WEIRD HISTORY -->
+    <section id="weird-history" class="tab-panel">
+      <div class="tier-label">Weird, stupid, coincidental, and insane — but real</div>
+      <p class="tier-note">Historical events that feel like jokes or movie plots, yet actually happened and had real downstream consequences.</p>
 
-    <!-- TIER 2 -->
-    <section id="tier2">
-      <div class="tier-label">Tier 2</div>
-      <h2>Big, Concrete Catastrophes 🌋</h2>
-      <p class="tier-note">Geology, extinction events, and cosmic hits that actually happened (or could). Less abstract, still huge.</p>
+      <h2>Accidents, Near-Misses & “We Almost Nuked Ourselves” ☢️</h2>
       <ul class="article-list">
         <li>
-          <a href="https://en.wikipedia.org/wiki/Timeline_of_natural_history" target="_blank" rel="noopener">
-            Timeline of natural history
+          <a class="article-link" href="https://en.wikipedia.org/wiki/1983_Soviet_nuclear_false_alarm_incident" target="_blank" rel="noopener">
+            1983 Soviet nuclear false alarm incident
           </a>
-          <span class="tagline">From Earth’s formation to now, in one absurdly long scroll.</span>
+          <span class="tagline">Stanislav Petrov decides the computer is wrong about incoming nukes; he’s right, and the world quietly survives.</span>
         </li>
         <li>
-          <a href="https://en.wikipedia.org/wiki/Snowball_Earth" target="_blank" rel="noopener">
-            Snowball Earth
+          <a class="article-link" href="https://en.wikipedia.org/wiki/Norwegian_rocket_incident" target="_blank" rel="noopener">
+            Norwegian rocket incident
           </a>
-          <span class="tagline">When the planet may have frozen almost entirely over.</span>
+          <span class="tagline">A scientific rocket launch is mistaken for a U.S. missile; Russian nuclear briefcase is opened.</span>
         </li>
         <li>
-          <a href="https://en.wikipedia.org/wiki/Great_Oxidation_Event" target="_blank" rel="noopener">
-            Great Oxidation Event
+          <a class="article-link" href="https://en.wikipedia.org/wiki/Black_Brant_scare" target="_blank" rel="noopener">
+            Black Brant scare
           </a>
-          <span class="tagline">Life changes the atmosphere and nearly wipes itself out.</span>
+          <span class="tagline">Another rocket, another misread, another near miss for global thermonuclear war.</span>
         </li>
         <li>
-          <a href="https://en.wikipedia.org/wiki/Chicxulub_impactor" target="_blank" rel="noopener">
-            Chicxulub impactor
+          <a class="article-link" href="https://en.wikipedia.org/wiki/1966_Palomares_B-52_crash" target="_blank" rel="noopener">
+            1966 Palomares B-52 crash
           </a>
-          <span class="tagline">The rock that helped end the non-avian dinosaurs.</span>
+          <span class="tagline">A U.S. bomber breaks up over Spain and drops four hydrogen bombs, reshaping nuclear safety practices.</span>
         </li>
         <li>
-          <a href="https://en.wikipedia.org/wiki/Quaternary_extinction_event" target="_blank" rel="noopener">
-            Quaternary extinction event
+          <a class="article-link" href="https://en.wikipedia.org/wiki/1961_Goldsboro_B-52_crash" target="_blank" rel="noopener">
+            1961 Goldsboro B-52 crash
           </a>
-          <span class="tagline">The relatively recent wave of megafaunal extinctions.</span>
+          <span class="tagline">One H-bomb comes within a single low-voltage switch of detonating over North Carolina.</span>
         </li>
         <li>
-          <a href="https://en.wikipedia.org/wiki/Toba_catastrophe_theory" target="_blank" rel="noopener">
-            Toba catastrophe theory
+          <a class="article-link" href="https://en.wikipedia.org/wiki/List_of_military_nuclear_accidents" target="_blank" rel="noopener">
+            List of military nuclear accidents
           </a>
-          <span class="tagline">Supervolcano, bottlenecked humanity, and climate chaos.</span>
-        </li>
-        <li>
-          <a href="https://en.wikipedia.org/wiki/Gamma-ray_burst" target="_blank" rel="noopener">
-            Gamma-ray burst
-          </a>
-          <span class="tagline">Enormous cosmic blasts that could sterilize planets at range.</span>
-        </li>
-        <li>
-          <a href="https://en.wikipedia.org/wiki/Gray_goo" target="_blank" rel="noopener">
-            Gray goo
-          </a>
-          <span class="tagline">Runaway self-replicating nanobots eat everything. Hypothetical, but iconic.</span>
-        </li>
-        <li>
-          <a href="https://en.wikipedia.org/wiki/Planetary_migration" target="_blank" rel="noopener">
-            Planetary migration
-          </a>
-          <span class="tagline">Planets don’t always stay where they formed; gravity gets weird.</span>
+          <span class="tagline">An entire catalog of “we misplaced/broke some nukes, sorry about that.”</span>
         </li>
       </ul>
-    </section>
 
-    <!-- TIER 1 -->
-    <section id="tier1">
-      <div class="tier-label">Tier 1</div>
-      <h2>Gentle On-Ramp & Long-Term Thinking 🧭</h2>
-      <p class="tier-note">Still fascinating, less likely to induce immediate existential crisis. Good starting points or palate cleansers.</p>
+      <h2>Wars & Politics Over Stupid Things ⚔️</h2>
       <ul class="article-list">
         <li>
-          <a href="https://en.wikipedia.org/wiki/Timeline_of_the_near_future" target="_blank" rel="noopener">
-            Timeline of the near future
+          <a class="article-link" href="https://en.wikipedia.org/wiki/War_of_Jenkins%27_Ear" target="_blank" rel="noopener">
+            War of Jenkins' Ear
           </a>
-          <span class="tagline">Upcoming eclipses, missions, and tech milestones on a human timescale.</span>
+          <span class="tagline">Britain and Spain go to war, named after one guy’s severed ear brandished in Parliament.</span>
         </li>
         <li>
-          <a href="https://en.wikipedia.org/wiki/Year_2038_problem" target="_blank" rel="noopener">
-            Year 2038 problem
+          <a class="article-link" href="https://en.wikipedia.org/wiki/Pig_War" target="_blank" rel="noopener">
+            Pig War
           </a>
-          <span class="tagline">Unix time overflow: a smaller, geekier cousin of Y2K.</span>
+          <span class="tagline">The U.S. and Britain nearly fight a war because a pig ate some potatoes.</span>
         </li>
         <li>
-          <a href="https://en.wikipedia.org/wiki/Long_Now_Foundation" target="_blank" rel="noopener">
-            Long Now Foundation
+          <a class="article-link" href="https://en.wikipedia.org/wiki/Pastry_War" target="_blank" rel="noopener">
+            Pastry War
           </a>
-          <span class="tagline">A group trying to get humans to think on 10,000-year horizons.</span>
+          <span class="tagline">France invades Mexico in part over compensation for a looted pastry shop.</span>
         </li>
         <li>
-          <a href="https://en.wikipedia.org/wiki/Clock_of_the_Long_Now" target="_blank" rel="noopener">
-            Clock of the Long Now
+          <a class="article-link" href="https://en.wikipedia.org/wiki/Cod_Wars" target="_blank" rel="noopener">
+            Cod Wars
           </a>
-          <span class="tagline">A mechanical clock designed to tick for ten millennia.</span>
+          <span class="tagline">Iceland and the U.K. clash repeatedly over fishing rights, reshaping maritime law.</span>
         </li>
         <li>
-          <a href="https://en.wikipedia.org/wiki/Voyager_Golden_Record" target="_blank" rel="noopener">
-            Voyager Golden Record
+          <a class="article-link" href="https://en.wikipedia.org/wiki/Football_War" target="_blank" rel="noopener">
+            Football War
           </a>
-          <span class="tagline">A time capsule of Earth sailing through interstellar space.</span>
+          <span class="tagline">Existing tensions erupt into war after a contentious series of soccer matches.</span>
         </li>
         <li>
-          <a href="https://en.wikipedia.org/wiki/List_of_unsolved_problems_in_physics" target="_blank" rel="noopener">
-            List of unsolved problems in physics
+          <a class="article-link" href="https://en.wikipedia.org/wiki/Defenestrations_of_Prague" target="_blank" rel="noopener">
+            Defenestrations of Prague
           </a>
-          <span class="tagline">A menu of mysteries that define how incomplete our understanding still is.</span>
+          <span class="tagline">Throwing officials out of windows helps trigger continent-spanning wars.</span>
+        </li>
+        <li>
+          <a class="article-link" href="https://en.wikipedia.org/wiki/Cadaver_Synod" target="_blank" rel="noopener">
+            Cadaver Synod
+          </a>
+          <span class="tagline">A pope has a dead predecessor exhumed and put on trial, deepening papal chaos.</span>
+        </li>
+        <li>
+          <a class="article-link" href="https://en.wikipedia.org/wiki/Emu_War" target="_blank" rel="noopener">
+            Emu War
+          </a>
+          <span class="tagline">Australia declares war on emus. The emus win on points, and it becomes a national meme.</span>
         </li>
       </ul>
+
+      <h2>Spies, Schemes & Psyops That Sound Made Up 🕵️</h2>
+      <ul class="article-list">
+        <li>
+          <a class="article-link" href="https://en.wikipedia.org/wiki/Ghost_Army" target="_blank" rel="noopener">
+            Ghost Army
+          </a>
+          <span class="tagline">Inflatable tanks, sound effects, and performance art confuse Nazi intelligence.</span>
+        </li>
+        <li>
+          <a class="article-link" href="https://en.wikipedia.org/wiki/Operation_Mincemeat" target="_blank" rel="noopener">
+            Operation Mincemeat
+          </a>
+          <span class="tagline">A corpse with fake papers misdirects German defenses before the Allied invasion of Europe.</span>
+        </li>
+        <li>
+          <a class="article-link" href="https://en.wikipedia.org/wiki/Operation_Cornflakes" target="_blank" rel="noopener">
+            Operation Cornflakes
+          </a>
+          <span class="tagline">Allies bomb mail trains, then stuff the system with fake Nazi mail undermining Nazi morale.</span>
+        </li>
+        <li>
+          <a class="article-link" href="https://en.wikipedia.org/wiki/Acoustic_Kitty" target="_blank" rel="noopener">
+            Acoustic Kitty
+          </a>
+          <span class="tagline">CIA tries to turn a house cat into a mobile listening device. It goes badly.</span>
+        </li>
+        <li>
+          <a class="article-link" href="https://en.wikipedia.org/wiki/Project_Azorian" target="_blank" rel="noopener">
+            Project Azorian
+          </a>
+          <span class="tagline">CIA uses a fake deep-sea mining ship to try to steal a sunken Soviet submarine.</span>
+        </li>
+        <li>
+          <a class="article-link" href="https://en.wikipedia.org/wiki/Operation_Paul_Bunyan" target="_blank" rel="noopener">
+            Operation Paul Bunyan
+          </a>
+          <span class="tagline">The U.S. brings overwhelming force to… cut down a tree in the Korean DMZ.</span>
+        </li>
+      </ul>
+
+      <h2>Bio, Animals & Plague-Level Bad Ideas 🐀</h2>
+      <ul class="article-list">
+        <li>
+          <a class="article-link" href="https://en.wikipedia.org/wiki/Rabbits_in_Australia" target="_blank" rel="noopener">
+            Rabbits in Australia
+          </a>
+          <span class="tagline">A few rabbits released for sport become an ecological disaster, spurring viral countermeasures.</span>
+        </li>
+        <li>
+          <a class="article-link" href="https://en.wikipedia.org/wiki/Four_Pests_campaign" target="_blank" rel="noopener">
+            Four Pests campaign
+          </a>
+          <span class="tagline">Mao’s war on sparrows helps trigger locust swarms and famine.</span>
+        </li>
+        <li>
+          <a class="article-link" href="https://en.wikipedia.org/wiki/Operation_Vegetarian" target="_blank" rel="noopener">
+            Operation Vegetarian
+          </a>
+          <span class="tagline">British plan to drop anthrax-laced cattle cakes on Germany to starve the population.</span>
+        </li>
+        <li>
+          <a class="article-link" href="https://en.wikipedia.org/wiki/Gruinard_Island" target="_blank" rel="noopener">
+            Gruinard Island
+          </a>
+          <span class="tagline">Site of anthrax tests so severe the island was quarantined for decades.</span>
+        </li>
+        <li>
+          <a class="article-link" href="https://en.wikipedia.org/wiki/Unit_731" target="_blank" rel="noopener">
+            Unit 731
+          </a>
+          <span class="tagline">Imperial Japan’s biowarfare program; its horrors help shape modern bioethics and international law.</span>
+        </li>
+        <li>
+          <a class="article-link" href="https://en.wikipedia.org/wiki/Dancing_plague_of_1518" target="_blank" rel="noopener">
+            Dancing plague of 1518
+          </a>
+          <span class="tagline">A “dancing mania” grips a city; authorities try to fix it by hiring more musicians.</span>
+        </li>
+      </ul>
+
+      <h2>Money, Bubbles & Burning It All Down 💸</h2>
+      <ul class="article-list">
+        <li>
+          <a class="article-link" href="https://en.wikipedia.org/wiki/South_Sea_Company" target="_blank" rel="noopener">
+            South Sea Bubble
+          </a>
+          <span class="tagline">Hype, corruption, and absurd valuations crash, reshaping British finance.</span>
+        </li>
+        <li>
+          <a class="article-link" href="https://en.wikipedia.org/wiki/John_Law_(economist)" target="_blank" rel="noopener">
+            John Law and the Mississippi Company
+          </a>
+          <span class="tagline">A state-backed French scheme that implodes and helps wreck royal finances before the Revolution.</span>
+        </li>
+        <li>
+          <a class="article-link" href="https://en.wikipedia.org/wiki/Tulip_mania" target="_blank" rel="noopener">
+            Tulip mania
+          </a>
+          <span class="tagline">Futures trading and speculation go wild over flower bulbs.</span>
+        </li>
+        <li>
+          <a class="article-link" href="https://en.wikipedia.org/wiki/Fire_of_Parliament" target="_blank" rel="noopener">
+            Fire of Parliament (1834)
+          </a>
+          <span class="tagline">An attempt to burn old tally sticks ends up destroying the Houses of Parliament.</span>
+        </li>
+        <li>
+          <a class="article-link" href="https://en.wikipedia.org/wiki/Panic_of_1907" target="_blank" rel="noopener">
+            Panic of 1907
+          </a>
+          <span class="tagline">An ad-hoc rescue led by J.P. Morgan paves the way for the U.S. Federal Reserve.</span>
+        </li>
+      </ul>
+
+      <h2>Science, Tech & Industrial Horror Stories 🔬</h2>
+      <ul class="article-list">
+        <li>
+          <a class="article-link" href="https://en.wikipedia.org/wiki/Radium_Girls" target="_blank" rel="noopener">
+            Radium Girls
+          </a>
+          <span class="tagline">Workers told to lick radium paintbrushes become a landmark case in labor and safety law.</span>
+        </li>
+        <li>
+          <a class="article-link" href="https://en.wikipedia.org/wiki/Chicago_Pile-1" target="_blank" rel="noopener">
+            Chicago Pile-1
+          </a>
+          <span class="tagline">The first self-sustaining nuclear chain reaction… under a stadium’s bleachers.</span>
+        </li>
+        <li>
+          <a class="article-link" href="https://en.wikipedia.org/wiki/Demon_core" target="_blank" rel="noopener">
+            Demon core
+          </a>
+          <span class="tagline">A plutonium core involved in two separate fatal criticality incidents, forcing changes in lab safety.</span>
+        </li>
+        <li>
+          <a class="article-link" href="https://en.wikipedia.org/wiki/Chernobyl_disaster" target="_blank" rel="noopener">
+            Chernobyl disaster
+          </a>
+          <span class="tagline">Design flaws and arrogance trigger the worst nuclear accident in history.</span>
+        </li>
+        <li>
+          <a class="article-link" href="https://en.wikipedia.org/wiki/Three_Mile_Island_accident" target="_blank" rel="noopener">
+            Three Mile Island accident
+          </a>
+          <span class="tagline">A partial meltdown and bungled communication reshape nuclear policy and public trust.</span>
+        </li>
+        <li>
+          <a class="article-link" href="https://en.wikipedia.org/wiki/Love_Canal" target="_blank" rel="noopener">
+            Love Canal
+          </a>
+          <span class="tagline">A neighborhood built atop buried chemical waste becomes a landmark environmental case.</span>
+        </li>
+        <li>
+          <a class="article-link" href="https://en.wikipedia.org/wiki/Vasa_(ship)" target="_blank" rel="noopener">
+            Vasa (ship)
+          </a>
+          <span class="tagline">A lavish Swedish warship capsizes and sinks minutes into its maiden voyage due to obvious design issues.</span>
+        </li>
+        <li>
+          <a class="article-link" href="https://en.wikipedia.org/wiki/HMS_Vanguard_(1909)" target="_blank" rel="noopener">
+            HMS Vanguard (1909)
+          </a>
+          <span class="tagline">An internal explosion destroys a battleship at anchor, highlighting dangers of cordite storage.</span>
+        </li>
+        <li>
+          <a class="article-link" href="https://en.wikipedia.org/wiki/Skylab" target="_blank" rel="noopener">
+            Skylab
+          </a>
+          <span class="tagline">NASA’s first space station falls out of orbit and rains debris on Australia, prompting new space-debris diplomacy.</span>
+        </li>
+        <li>
+          <a class="article-link" href="https://en.wikipedia.org/wiki/Mauveine" target="_blank" rel="noopener">
+            Mauveine
+          </a>
+          <span class="tagline">A failed attempt to make medicine accidentally creates the first synthetic dye, launching modern industrial chemistry.</span>
+        </li>
+        <li>
+          <a class="article-link" href="https://en.wikipedia.org/wiki/Phossy_jaw" target="_blank" rel="noopener">
+            Phossy jaw
+          </a>
+          <span class="tagline">Match workers’ jawbones literally rot from white phosphorus, leading to chemical reforms.</span>
+        </li>
+      </ul>
+
+      <h2>Coincidences, Bureaucratic Nonsense & “You Can’t Make This Up” 🎲</h2>
+      <ul class="article-list">
+        <li>
+          <a class="article-link" href="https://en.wikipedia.org/wiki/Assassination_of_Archduke_Franz_Ferdinand" target="_blank" rel="noopener">
+            Assassination of Archduke Franz Ferdinand
+          </a>
+          <span class="tagline">A wrong turn brings the Archduke face-to-face with his would-be assassin, lighting the fuse for WWI.</span>
+        </li>
+        <li>
+          <a class="article-link" href="https://en.wikipedia.org/wiki/Assassination_attempts_on_Adolf_Hitler" target="_blank" rel="noopener">
+            Assassination attempts on Adolf Hitler
+          </a>
+          <span class="tagline">A surprisingly long list of near misses that might have radically altered the 20th century.</span>
+        </li>
+        <li>
+          <a class="article-link" href="https://en.wikipedia.org/wiki/Miracle_of_the_House_of_Brandenburg" target="_blank" rel="noopener">
+            Miracle of the House of Brandenburg
+          </a>
+          <span class="tagline">The sudden death of a Russian empress saves Prussia from likely defeat in the Seven Years’ War.</span>
+        </li>
+        <li>
+          <a class="article-link" href="https://en.wikipedia.org/wiki/Great_Stink" target="_blank" rel="noopener">
+            Great Stink
+          </a>
+          <span class="tagline">A brutally hot summer and raw sewage in the Thames finally force London to modernize sanitation.</span>
+        </li>
+        <li>
+          <a class="article-link" href="https://en.wikipedia.org/wiki/Great_Molasses_Flood" target="_blank" rel="noopener">
+            Great Molasses Flood
+          </a>
+          <span class="tagline">A wave of molasses devastates part of Boston and helps reshape industrial liability law.</span>
+        </li>
+        <li>
+          <a class="article-link" href="https://en.wikipedia.org/wiki/London_Beer_Flood" target="_blank" rel="noopener">
+            London Beer Flood
+          </a>
+          <span class="tagline">A huge beer vat bursts, sending a tsunami of porter through London streets.</span>
+        </li>
+        <li>
+          <a class="article-link" href="https://en.wikipedia.org/wiki/Balloonfest_%2786" target="_blank" rel="noopener">
+            Balloonfest ’86
+          </a>
+          <span class="tagline">A charity stunt releases 1.5 million balloons over Cleveland, causing chaos and lawsuits.</span>
+        </li>
+        <li>
+          <a class="article-link" href="https://en.wikipedia.org/wiki/Project_A119" target="_blank" rel="noopener">
+            Project A119
+          </a>
+          <span class="tagline">A U.S. plan in the 1950s to detonate a nuclear device on the Moon for “prestige.”</span>
+        </li>
+        <li>
+          <a class="article-link" href="https://en.wikipedia.org/wiki/Operation_LAC" target="_blank" rel="noopener">
+            Operation LAC
+          </a>
+          <span class="tagline">The U.S. sprays vast areas with particles to study dispersion, raising later ethical and health concerns.</span>
+        </li>
+        <li>
+          <a class="article-link" href="https://en.wikipedia.org/wiki/Zimmermann_Telegram" target="_blank" rel="noopener">
+            Zimmermann Telegram
+          </a>
+          <span class="tagline">Germany’s clumsy proposal to Mexico helps push the U.S. into WWI once the telegram goes public.</span>
+        </li>
+        <li>
+          <a class="article-link" href="https://en.wikipedia.org/wiki/Ems_dispatch" target="_blank" rel="noopener">
+            Ems dispatch
+          </a>
+          <span class="tagline">Bismarck edits a diplomatic telegram just enough to inflame public opinion and trigger the Franco-Prussian War.</span>
+        </li>
+        <li>
+          <a class="article-link" href="https://en.wikipedia.org/wiki/Metric_Martyrs" target="_blank" rel="noopener">
+            Metric Martyrs
+          </a>
+          <span class="tagline">Small British shopkeepers prosecuted for using imperial units become symbols in a culture war.</span>
+        </li>
+        <li>
+          <a class="article-link" href="https://en.wikipedia.org/wiki/Horse_dung" target="_blank" rel="noopener">
+            Great horse manure crisis of 1894
+          </a>
+          <span class="tagline">Dire predictions that cities would be buried in horse manure are “solved” by the automobile, with its own new disasters.</span>
+        </li>
+      </ul>
+
+      <div class="meta">
+        <p>Tip: this tab is your hub for <em>weird history and consequential nonsense</em>. Perfect when you want events that sound fake but shaped the world anyway.</p>
+      </div>
     </section>
 
     <div class="meta">
-      <p>Tip: save this file as <code>deep-time-wikipedia.html</code> and add it to your bookmarks or home screen. When you finish a page, follow its “See also” links to extend the rabbit hole.</p>
+      <p><strong>To add another themed list later:</strong> create a new <code>&lt;button class="tab-button" data-tab="your-id"&gt;</code> in the tab bar, and a matching <code>&lt;section id="your-id" class="tab-panel"&gt;</code> below. Any <code>&lt;a&gt;</code> with class <code>article-link</code> will be included in the randomizer automatically.</p>
     </div>
   </div>
+
+  <script>
+    // Tab behavior
+    const tabButtons = Array.from(document.querySelectorAll('.tab-button'));
+    const tabPanels = Array.from(document.querySelectorAll('.tab-panel'));
+
+    function activateTab(id) {
+      tabButtons.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === id);
+      });
+      tabPanels.forEach(panel => {
+        panel.classList.toggle('active', panel.id === id);
+      });
+    }
+
+    tabButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        activateTab(btn.dataset.tab);
+      });
+    });
+
+    // Random article behavior
+    const randomBtn = document.getElementById('randomBtn');
+    const randomInfo = document.getElementById('randomInfo');
+
+    function getAllArticleLinks() {
+      return Array.from(document.querySelectorAll('a.article-link'));
+    }
+
+    function pickRandomArticle() {
+      const links = getAllArticleLinks();
+      if (!links.length) return null;
+      const idx = Math.floor(Math.random() * links.length);
+      return links[idx];
+    }
+
+    randomBtn.addEventListener('click', () => {
+      const article = pickRandomArticle();
+      if (!article) return;
+
+      const title = (article.textContent || '').trim();
+      const href = article.getAttribute('href');
+
+      randomInfo.innerHTML = `Jumping to: <strong>${title}</strong>`;
+      // Navigate to the article (same tab)
+      if (href) {
+        window.location.href = href;
+      }
+    });
+  </script>
 </body>
 </html>
+```
