@@ -1,590 +1,448 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Shield, 
-  Cpu, 
-  Package, 
-  AlertTriangle, 
-  CheckCircle, 
-  Zap, 
-  Search, 
-  ArrowRight,
-  Rocket,
-  Server,
-  Monitor,
-  Briefcase,
-  X,
-  Bot,
-  Sparkles,
-  MessageSquare,
-  Loader2
-} from 'lucide-react';
-
-// --- Types & Data ---
-
-type MissionType = 'hardware' | 'software' | 'services' | null;
-type ViewState = 'briefing' | 'loadout' | 'review' | 'launch';
-
-interface Item {
-  id: string;
-  name: string;
-  cost: number;
-  risk: 'low' | 'medium' | 'high';
-  category: 'hardware' | 'software';
-  icon: any;
-  desc: string;
-}
-
-const INVENTORY_ITEMS: Item[] = [
-  { id: '1', name: 'Latitude Rugged Extreme', cost: 2500, risk: 'low', category: 'hardware', icon: Cpu, desc: 'Standard field issue. TAA Compliant.' },
-  { id: '2', name: 'Precision Workstation', cost: 4200, risk: 'low', category: 'hardware', icon: Server, desc: 'High-compute node. Pre-vetted.' },
-  { id: '3', name: 'Generic External Drive', cost: 150, risk: 'high', category: 'hardware', icon: Package, desc: 'Unverified supply chain origin.' },
-  { id: '4', name: 'Ultrawide Cmd Center', cost: 1200, risk: 'low', category: 'hardware', icon: Monitor, desc: 'Dual-input visualization.' },
-  { id: '5', name: 'CyberDefense Suite', cost: 15000, risk: 'low', category: 'software', icon: Shield, desc: 'Enterprise AV/EDR license.' },
-  { id: '6', name: 'Cloud Migration Hrs', cost: 250, risk: 'low', category: 'services', icon: Briefcase, desc: 'Per-hour engineering support.' },
-];
-
-// --- Components ---
-
-const ProgressBar = ({ value, max, color, label }: { value: number, max: number, color: string, label: string }) => {
-  const percentage = Math.min(100, Math.max(0, (value / max) * 100));
-  return (
-    <div className="flex flex-col w-full gap-1">
-      <div className="flex justify-between text-xs uppercase tracking-widest font-bold text-slate-400">
-        <span>{label}</span>
-        <span>{Math.round(percentage)}%</span>
-      </div>
-      <div className="h-3 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
-        <div 
-          className={`h-full transition-all duration-500 ease-out ${color}`} 
-          style={{ width: `${percentage}%` }}
-        />
-      </div>
-    </div>
-  );
-};
-
-const Card = ({ children, className = "", onClick }: { children: React.ReactNode, className?: string, onClick?: () => void }) => (
-  <div 
-    onClick={onClick}
-    className={`bg-slate-900/80 border border-slate-700 p-6 rounded-xl backdrop-blur-md hover:border-blue-500/50 transition-all duration-300 shadow-xl ${onClick ? 'cursor-pointer hover:transform hover:scale-[1.02]' : ''} ${className}`}
-  >
-    {children}
-  </div>
-);
-
-// --- Gemini API Helper ---
-const apiKey = ""; // Runtime provided
-
-async function generateContent(prompt: string) {
-  try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-        }),
-      }
-    );
-    const data = await response.json();
-    return data.candidates?.[0]?.content?.parts?.[0]?.text || "Communication disrupted. Try again.";
-  } catch (error) {
-    console.error("Gemini Error:", error);
-    return "Connection to AI Core failed.";
-  }
-}
-
-// --- Main Application ---
-
-export default function SEWPMissionControl() {
-  const [view, setView] = useState<ViewState>('briefing');
-  const [mission, setMission] = useState<MissionType>(null);
-  const [missionName, setMissionName] = useState<string>("Standard Procurement");
-  const [missionBrief, setMissionBrief] = useState<string>("Execute standard acquisition protocols.");
-  
-  const [budget, setBudget] = useState(50000);
-  const [spent, setSpent] = useState(0);
-  const [compliance, setCompliance] = useState(100);
-  const [cart, setCart] = useState<Item[]>([]);
-  const [message, setMessage] = useState<{text: string, type: 'info' | 'warn' | 'success'} | null>(null);
-  const [launchProgress, setLaunchProgress] = useState(0);
-
-  // AI State
-  const [customInput, setCustomInput] = useState("");
-  const [isAiLoading, setIsAiLoading] = useState(false);
-  const [quartermasterAdvice, setQuartermasterAdvice] = useState<string | null>(null);
-
-  // Sound effects "simulation"
-  const playSound = (type: 'click' | 'success' | 'warn') => {
-    // console.log(`Audio: ${type}`);
-  };
-
-  const addToCart = (item: Item) => {
-    if (item.risk === 'high') {
-      setMessage({ text: "WARNING: Supply Chain Risk Detected! This vendor requires Level 3 Justification.", type: 'warn' });
-      setCompliance(prev => Math.max(0, prev - 25));
-      playSound('warn');
-    } else {
-      setMessage({ text: `${item.name} equipped to loadout.`, type: 'success' });
-      setCompliance(prev => Math.min(100, prev + 5)); // Healing mechanic
-      playSound('success');
-    }
-    setCart([...cart, item]);
-    setSpent(prev => prev + item.cost);
-    setQuartermasterAdvice(null); // Reset advice on cart change
-  };
-
-  const removeFromCart = (index: number, item: Item) => {
-    const newCart = [...cart];
-    newCart.splice(index, 1);
-    setCart(newCart);
-    setSpent(prev => prev - item.cost);
-    if (item.risk === 'high') setCompliance(prev => Math.min(100, prev + 25));
-    setQuartermasterAdvice(null);
-  };
-
-  const handleMissionSelect = (type: MissionType, name?: string, brief?: string) => {
-    setMission(type);
-    if (name) setMissionName(name);
-    if (brief) setMissionBrief(brief);
-    setView('loadout');
-    setMessage({ text: "Mission parameters initialized. Accessing SEWP V Inventory...", type: 'info' });
-  };
-
-  const launchMission = () => {
-    setView('launch');
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += 2;
-      setLaunchProgress(progress);
-      if (progress >= 100) {
-        clearInterval(interval);
-      }
-    }, 50);
-  };
-
-  // --- AI Features ---
-
-  const generateMissionProfile = async () => {
-    if (!customInput.trim()) return;
-    setIsAiLoading(true);
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NASA SEWP: Mission Control</title>
     
-    const prompt = `You are a sci-fi Mission Control commander. The user wants to procure items for this government purpose: "${customInput}". 
-    1. Generate a cool military/sci-fi Operation Name.
-    2. Write a 1-sentence tactical briefing.
-    3. Choose the best category from: hardware, software, services.
-    Format as JSON: {"name": "...", "briefing": "...", "category": "..."}`;
+    <!-- 1. Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 2. Load React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- 3. Load Babel (to parse JSX in browser) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-    try {
-      const result = await generateContent(prompt);
-      // Basic cleanup for JSON parsing
-      const jsonStr = result.replace(/```json/g, '').replace(/```/g, '').trim();
-      const data = JSON.parse(jsonStr);
-      
-      handleMissionSelect(
-        data.category.toLowerCase() as MissionType, 
-        data.name, 
-        data.briefing
-      );
-    } catch (e) {
-      setMessage({ text: "AI Generation failed. Falling back to manual.", type: 'warn' });
-    } finally {
-      setIsAiLoading(false);
-    }
-  };
+    <!-- Custom Font -->
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
 
-  const consultQuartermaster = async () => {
-    setIsAiLoading(true);
-    const cartNames = cart.map(i => i.name).join(', ');
-    const prompt = `You are a grumpy but knowledgeable sci-fi Quartermaster on a spaceship. 
-    Analyze this loadout: [${cartNames}]. 
-    Budget Spent: $${spent} / $${budget}. 
-    Compliance: ${compliance}%.
-    Give 1-2 sentences of tactical advice. If they bought risky items, scold them. If they have good gear, compliment them grudgingly.`;
-
-    const advice = await generateContent(prompt);
-    setQuartermasterAdvice(advice);
-    setIsAiLoading(false);
-  };
-
-  // --- Views ---
-
-  const renderHUD = () => (
-    <div className="fixed top-0 left-0 right-0 h-20 bg-slate-950/90 border-b border-slate-800 flex items-center px-6 z-50 backdrop-blur-lg justify-between">
-      <div className="flex items-center gap-4">
-        <div className="bg-blue-600 p-2 rounded-lg">
-          <Rocket className="text-white w-6 h-6" />
-        </div>
-        <div>
-          <h1 className="text-white font-bold tracking-wider text-lg">NASA SEWP VI</h1>
-          <p className="text-blue-400 text-xs font-mono uppercase">Mission Control</p>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-12 flex-1 max-w-2xl px-12">
-        <div className="flex-1">
-          <ProgressBar 
-            value={spent} 
-            max={budget} 
-            color={spent > budget ? "bg-red-500" : "bg-blue-500"} 
-            label="Budget Authorization" 
-          />
-          <div className="flex justify-between text-xs text-slate-500 font-mono mt-1">
-            <span>${spent.toLocaleString()}</span>
-            <span>${budget.toLocaleString()} CAP</span>
-          </div>
-        </div>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #020617; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
         
-        <div className="flex-1">
-          <ProgressBar 
-            value={compliance} 
-            max={100} 
-            color={compliance < 50 ? "bg-red-500" : compliance < 80 ? "bg-yellow-500" : "bg-emerald-500"} 
-            label="Compliance Shield" 
-          />
-          <div className="flex justify-between text-xs text-slate-500 font-mono mt-1">
-            <span>{compliance < 80 ? "RISK DETECTED" : "SECURE"}</span>
-            <span>100%</span>
-          </div>
-        </div>
-      </div>
+        /* Custom Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(30, 41, 59, 0.5); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.5); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(59, 130, 246, 0.8); }
 
-      <div className="flex items-center gap-4">
-        <div className="text-right hidden md:block">
-          <div className="text-white font-bold">Agent Logan</div>
-          <div className="text-slate-500 text-xs">GS-13 Procurement Officer</div>
-        </div>
-        <div className="w-10 h-10 bg-slate-800 rounded-full border border-slate-600 flex items-center justify-center text-slate-400">
-          AL
-        </div>
-      </div>
-    </div>
-  );
+        /* Animations */
+        @keyframes scanline {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(100%); }
+        }
+        .scanline::after {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(to bottom, transparent 50%, rgba(0, 0, 0, 0.3) 50%);
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 50;
+        }
+    </style>
+</head>
+<body class="text-slate-200 antialiased selection:bg-blue-500/30 selection:text-blue-200 overflow-hidden">
+    <div id="root"></div>
 
-  const renderBriefing = () => (
-    <div className="flex flex-col items-center justify-center min-h-screen pt-20 pb-12 px-4">
-      <div className="max-w-4xl w-full space-y-8">
-        <div className="text-center space-y-4">
-          <h2 className="text-5xl font-black text-white tracking-tight">Select Mission Profile</h2>
-          <p className="text-slate-400 text-xl max-w-2xl mx-auto">
-            Identify your objective to initialize procurement protocols.
-          </p>
-        </div>
+    <script type="text/babel">
+        // --- ICONS (Inline SVGs to avoid dependency complexity) ---
+        const Icons = {
+            Rocket: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>,
+            Server: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="8" x="2" y="2" rx="2" ry="2"/><rect width="20" height="8" x="2" y="14" rx="2" ry="2"/><line x1="6" x2="6.01" y1="6" y2="6"/><line x1="6" x2="6.01" y1="18" y2="18"/></svg>,
+            Zap: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
+            Briefcase: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>,
+            Cpu: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="16" height="16" x="4" y="4" rx="2"/><rect width="6" height="6" x="9" y="9" rx="1"/><path d="M15 2v2"/><path d="M15 20v2"/><path d="M2 15h2"/><path d="M2 9h2"/><path d="M20 15h2"/><path d="M20 9h2"/><path d="M9 2v2"/><path d="M9 20v2"/></svg>,
+            Shield: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>,
+            Package: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>,
+            Monitor: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>,
+            AlertTriangle: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>,
+            CheckCircle: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>,
+            Search: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>,
+            ArrowRight: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>,
+            X: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>,
+            Bot: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>,
+            Sparkles: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>,
+            Loader2: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>,
+            Key: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg>
+        };
 
-        {/* AI Mission Architect */}
-        <div className="relative max-w-2xl mx-auto w-full group">
-          <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
-          <div className="relative bg-slate-900 rounded-lg p-1 flex items-center">
-            <div className="pl-4 pr-2">
-              <Sparkles className="w-5 h-5 text-purple-400 animate-pulse" />
-            </div>
-            <input 
-              type="text"
-              value={customInput}
-              onChange={(e) => setCustomInput(e.target.value)}
-              placeholder="Or describe your mission (e.g., 'Equip a jungle research team')..."
-              className="w-full bg-transparent border-none focus:ring-0 text-white placeholder-slate-500 h-12"
-              onKeyDown={(e) => e.key === 'Enter' && generateMissionProfile()}
-            />
-            <button 
-              onClick={generateMissionProfile}
-              disabled={!customInput || isAiLoading}
-              className="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-md font-medium text-sm transition-colors flex items-center gap-2 whitespace-nowrap mr-1"
-            >
-              {isAiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Generate Mission'}
-            </button>
-          </div>
-        </div>
+        // --- DATA ---
+        const INVENTORY_ITEMS = [
+            { id: '1', name: 'Latitude Rugged Extreme', cost: 2500, risk: 'low', category: 'hardware', icon: Icons.Cpu, desc: 'Standard field issue. TAA Compliant.' },
+            { id: '2', name: 'Precision Workstation', cost: 4200, risk: 'low', category: 'hardware', icon: Icons.Server, desc: 'High-compute node. Pre-vetted.' },
+            { id: '3', name: 'Generic External Drive', cost: 150, risk: 'high', category: 'hardware', icon: Icons.Package, desc: 'Unverified supply chain origin.' },
+            { id: '4', name: 'Ultrawide Cmd Center', cost: 1200, risk: 'low', category: 'hardware', icon: Icons.Monitor, desc: 'Dual-input visualization.' },
+            { id: '5', name: 'CyberDefense Suite', cost: 15000, risk: 'low', category: 'software', icon: Icons.Shield, desc: 'Enterprise AV/EDR license.' },
+            { id: '6', name: 'Cloud Migration Hrs', cost: 250, risk: 'low', category: 'services', icon: Icons.Briefcase, desc: 'Per-hour engineering support.' },
+        ];
 
-        <div className="grid md:grid-cols-3 gap-6 mt-8">
-          <Card onClick={() => handleMissionSelect('hardware')} className="group hover:bg-slate-800/50">
-            <div className="h-48 flex flex-col items-center justify-center text-center space-y-4">
-              <div className="p-4 bg-blue-500/10 rounded-full group-hover:bg-blue-500/20 transition-colors">
-                <Server className="w-12 h-12 text-blue-400 group-hover:scale-110 transition-transform duration-300" />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-white">Hardware Equip</h3>
-                <p className="text-slate-400 text-sm mt-2">Servers, Laptops, Networking</p>
-              </div>
-            </div>
-          </Card>
+        // --- HELPERS ---
+        async function generateContent(prompt, apiKey) {
+            if (!apiKey) return "API Key Required. Check settings.";
+            try {
+                const response = await fetch(
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`,
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+                    }
+                );
+                const data = await response.json();
+                return data.candidates?.[0]?.content?.parts?.[0]?.text || "Communication disrupted.";
+            } catch (error) {
+                return "Connection to AI Core failed.";
+            }
+        }
 
-          <Card onClick={() => handleMissionSelect('software')} className="group hover:bg-slate-800/50">
-            <div className="h-48 flex flex-col items-center justify-center text-center space-y-4">
-              <div className="p-4 bg-purple-500/10 rounded-full group-hover:bg-purple-500/20 transition-colors">
-                <Zap className="w-12 h-12 text-purple-400 group-hover:scale-110 transition-transform duration-300" />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-white">Software License</h3>
-                <p className="text-slate-400 text-sm mt-2">SaaS, Cloud, Enterprise</p>
-              </div>
-            </div>
-          </Card>
-
-          <Card onClick={() => handleMissionSelect('services')} className="group hover:bg-slate-800/50">
-            <div className="h-48 flex flex-col items-center justify-center text-center space-y-4">
-              <div className="p-4 bg-emerald-500/10 rounded-full group-hover:bg-emerald-500/20 transition-colors">
-                <Briefcase className="w-12 h-12 text-emerald-400 group-hover:scale-110 transition-transform duration-300" />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-white">Support Services</h3>
-                <p className="text-slate-400 text-sm mt-2">Maintenance, Installation</p>
-              </div>
-            </div>
-          </Card>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderLoadout = () => (
-    <div className="pt-24 px-6 max-w-7xl mx-auto h-screen flex gap-8 pb-6">
-      {/* Left: Inventory */}
-      <div className="flex-1 flex flex-col gap-6">
-        <div className="flex flex-col gap-2">
-          <div className="flex justify-between items-end">
-            <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-              <span className="text-blue-500">///</span> 
-              {missionName}
-            </h2>
-            <span className="text-xs font-mono text-blue-400 border border-blue-900 bg-blue-900/20 px-2 py-1 rounded">
-              {mission?.toUpperCase()} PROTOCOL
-            </span>
-          </div>
-          <p className="text-slate-400 text-sm font-mono border-l-2 border-slate-700 pl-3">
-            {missionBrief}
-          </p>
-        </div>
-
-        <div className="flex justify-between items-center mt-2">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 w-4 h-4" />
-            <input 
-              type="text" 
-              placeholder="Filter assets..." 
-              className="bg-slate-900 border border-slate-700 rounded-full py-2 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-blue-500 w-full"
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4 overflow-y-auto pr-2 custom-scrollbar flex-1">
-          {INVENTORY_ITEMS.map((item) => (
-            <Card key={item.id} className="relative group p-4 bg-slate-900/50 hover:bg-slate-800">
-              {item.risk === 'high' && (
-                <div className="absolute top-2 right-2 text-amber-500 animate-pulse">
-                  <AlertTriangle className="w-5 h-5" />
+        // --- COMPONENTS ---
+        const ProgressBar = ({ value, max, color, label }) => {
+            const percentage = Math.min(100, Math.max(0, (value / max) * 100));
+            return (
+                <div className="flex flex-col w-full gap-1">
+                    <div className="flex justify-between text-xs uppercase tracking-widest font-bold text-slate-400">
+                        <span>{label}</span>
+                        <span>{Math.round(percentage)}%</span>
+                    </div>
+                    <div className="h-3 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
+                        <div className={`h-full transition-all duration-500 ease-out ${color}`} style={{ width: `${percentage}%` }} />
+                    </div>
                 </div>
-              )}
-              <div className="flex items-start gap-4">
-                <div className={`p-3 rounded-lg ${item.risk === 'high' ? 'bg-amber-900/20' : 'bg-slate-800'}`}>
-                  <item.icon className={`w-6 h-6 ${item.risk === 'high' ? 'text-amber-500' : 'text-blue-400'}`} />
-                </div>
-                <div>
-                  <h3 className="text-white font-bold text-sm">{item.name}</h3>
-                  <p className="text-slate-400 text-xs mt-1 leading-relaxed">{item.desc}</p>
-                  <div className="mt-4 flex items-center justify-between">
-                    <span className="text-slate-300 font-mono text-sm">${item.cost.toLocaleString()}</span>
-                    <button 
-                      onClick={() => addToCart(item)}
-                      className="bg-blue-600 hover:bg-blue-500 text-white text-xs px-3 py-1.5 rounded-md font-medium transition-colors"
-                    >
-                      EQUIP
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
-      </div>
+            );
+        };
 
-      {/* Right: Loadout Panel */}
-      <div className="w-96 flex flex-col gap-4">
-        <div className="bg-slate-900/90 border border-slate-700 rounded-xl p-6 flex-1 flex flex-col backdrop-blur-md">
-          <div className="flex justify-between items-center mb-4 border-b border-slate-800 pb-2">
-            <h3 className="text-slate-400 text-xs font-bold uppercase tracking-widest">
-              Current Loadout
-            </h3>
-            <button 
-              onClick={consultQuartermaster}
-              disabled={isAiLoading || cart.length === 0}
-              className="text-xs flex items-center gap-1 text-purple-400 hover:text-purple-300 transition-colors disabled:opacity-50"
-            >
-              <Bot className="w-3 h-3" />
-              {isAiLoading ? 'Analyzing...' : 'Tactical Check'}
-            </button>
-          </div>
-
-          {/* AI Advice Bubble */}
-          {quartermasterAdvice && (
-            <div className="mb-4 bg-purple-900/20 border border-purple-500/30 p-3 rounded-lg flex gap-3 animate-in fade-in slide-in-from-top-2">
-              <Bot className="w-5 h-5 text-purple-400 flex-shrink-0 mt-1" />
-              <p className="text-xs text-purple-200 leading-relaxed italic">
-                "{quartermasterAdvice}"
-              </p>
+        const Card = ({ children, className = "", onClick }) => (
+            <div onClick={onClick} className={`bg-slate-900/80 border border-slate-700 p-6 rounded-xl backdrop-blur-md hover:border-blue-500/50 transition-all duration-300 shadow-xl ${onClick ? 'cursor-pointer hover:transform hover:scale-[1.02]' : ''} ${className}`}>
+                {children}
             </div>
-          )}
-          
-          <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar">
-            {cart.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-slate-600 space-y-2">
-                <Package className="w-8 h-8 opacity-50" />
-                <span className="text-sm">Loadout Empty</span>
-              </div>
-            ) : (
-              cart.map((item, idx) => (
-                <div key={idx} className="flex items-center gap-3 bg-slate-950/50 p-3 rounded-lg border border-slate-800 group">
-                  <item.icon className="w-4 h-4 text-slate-500" />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-white text-sm truncate">{item.name}</div>
-                    <div className="text-slate-500 text-xs font-mono">${item.cost.toLocaleString()}</div>
-                  </div>
-                  <button 
-                    onClick={() => removeFromCart(idx, item)}
-                    className="text-slate-600 hover:text-red-400 transition-colors"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              ))
-            )}
-          </div>
+        );
 
-          <div className="mt-4 pt-4 border-t border-slate-800 space-y-4">
-            <div className="flex justify-between items-end">
-              <span className="text-slate-400 text-sm">Total Est.</span>
-              <span className="text-2xl font-bold text-white font-mono">${spent.toLocaleString()}</span>
-            </div>
+        // --- MAIN APP ---
+        function App() {
+            const [view, setView] = React.useState('briefing');
+            const [mission, setMission] = React.useState(null);
+            const [missionName, setMissionName] = React.useState("Standard Procurement");
+            const [missionBrief, setMissionBrief] = React.useState("Execute standard acquisition protocols.");
+            const [apiKey, setApiKey] = React.useState("");
+            const [showApiKeyInput, setShowApiKeyInput] = React.useState(false);
             
-            {message && (
-              <div className={`p-3 rounded-lg text-xs border ${
-                message.type === 'warn' ? 'bg-amber-900/20 border-amber-800 text-amber-200' : 
-                message.type === 'success' ? 'bg-emerald-900/20 border-emerald-800 text-emerald-200' :
-                'bg-blue-900/20 border-blue-800 text-blue-200'
-              } animate-in fade-in slide-in-from-bottom-2 duration-300`}>
-                {message.type === 'warn' && <AlertTriangle className="w-3 h-3 inline mr-2 mb-0.5" />}
-                {message.type === 'success' && <CheckCircle className="w-3 h-3 inline mr-2 mb-0.5" />}
-                {message.text}
-              </div>
-            )}
+            const [budget, setBudget] = React.useState(50000);
+            const [spent, setSpent] = React.useState(0);
+            const [compliance, setCompliance] = React.useState(100);
+            const [cart, setCart] = React.useState([]);
+            const [message, setMessage] = React.useState(null);
+            const [launchProgress, setLaunchProgress] = React.useState(0);
 
-            <button 
-              onClick={() => cart.length > 0 && setView('launch')}
-              disabled={cart.length === 0}
-              className={`w-full py-4 rounded-lg font-bold flex items-center justify-center gap-2 transition-all ${
-                cart.length > 0 
-                  ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-900/20' 
-                  : 'bg-slate-800 text-slate-500 cursor-not-allowed'
-              }`}
-            >
-              INITIATE RFQ <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+            // AI State
+            const [customInput, setCustomInput] = React.useState("");
+            const [isAiLoading, setIsAiLoading] = React.useState(false);
+            const [quartermasterAdvice, setQuartermasterAdvice] = React.useState(null);
 
-  const renderLaunch = () => (
-    <div className="flex flex-col items-center justify-center min-h-screen pt-20 pb-12 px-4">
-      {launchProgress < 100 ? (
-        <div className="max-w-md w-full space-y-8 text-center">
-          <div className="relative w-32 h-32 mx-auto">
-            <div className="absolute inset-0 border-4 border-slate-800 rounded-full"></div>
-            <div className="absolute inset-0 border-4 border-blue-500 rounded-full border-t-transparent animate-spin"></div>
-            <Rocket className="absolute inset-0 m-auto text-white w-12 h-12 animate-pulse" />
-          </div>
-          <div>
-            <h2 className="text-3xl font-bold text-white mb-2">Broadcasting to Vendors</h2>
-            <p className="text-slate-400 font-mono">SEWP GALAXY NETWORK</p>
-          </div>
-          <div className="space-y-2">
-            <div className="flex justify-between text-xs text-blue-400 font-mono uppercase">
-              <span>Encrypting</span>
-              <span>{launchProgress}%</span>
-            </div>
-            <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
-              <div className="h-full bg-blue-500 transition-all duration-75" style={{ width: `${launchProgress}%` }}></div>
-            </div>
-          </div>
-          <div className="text-sm text-slate-500 font-mono animate-pulse">
-             Contacting 47 Approved Small Businesses...
-          </div>
-        </div>
-      ) : (
-        <div className="max-w-xl w-full text-center space-y-8 animate-in zoom-in duration-500">
-           <div className="w-32 h-32 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto border border-emerald-500/50 shadow-2xl shadow-emerald-900/20">
-             <CheckCircle className="w-16 h-16 text-emerald-400" />
-           </div>
-           
-           <div className="space-y-4">
-             <h2 className="text-4xl font-bold text-white">Mission Launched</h2>
-             <p className="text-slate-400 text-lg">
-               Your Request for Quote (RFQ #24-9982) has been successfully deployed to the SEWP marketplace.
-             </p>
-           </div>
+            const addToCart = (item) => {
+                if (item.risk === 'high') {
+                    setMessage({ text: "WARNING: Supply Chain Risk Detected! Requires Level 3 Justification.", type: 'warn' });
+                    setCompliance(prev => Math.max(0, prev - 25));
+                } else {
+                    setMessage({ text: `${item.name} equipped.`, type: 'success' });
+                    setCompliance(prev => Math.min(100, prev + 5));
+                }
+                setCart([...cart, item]);
+                setSpent(prev => prev + item.cost);
+                setQuartermasterAdvice(null);
+            };
 
-           <div className="bg-slate-900/80 border border-slate-700 rounded-xl p-6 text-left space-y-4">
-             <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Mission Summary</h3>
-             <div className="flex justify-between items-center border-b border-slate-800 pb-4">
-               <span className="text-white">Compliance Rating</span>
-               <span className={`font-mono font-bold ${compliance < 80 ? 'text-amber-500' : 'text-emerald-400'}`}>
-                 {compliance}/100
-               </span>
-             </div>
-             <div className="flex justify-between items-center border-b border-slate-800 pb-4">
-               <span className="text-white">Est. Savings</span>
-               <span className="font-mono font-bold text-blue-400">$3,240.00</span>
-             </div>
-             <div className="flex justify-between items-center">
-                <span className="text-white">XP Gained</span>
-                <span className="font-mono font-bold text-purple-400">+450 Procurement XP</span>
-             </div>
-           </div>
+            const removeFromCart = (index, item) => {
+                const newCart = [...cart];
+                newCart.splice(index, 1);
+                setCart(newCart);
+                setSpent(prev => prev - item.cost);
+                if (item.risk === 'high') setCompliance(prev => Math.min(100, prev + 25));
+                setQuartermasterAdvice(null);
+            };
 
-           <button 
-             onClick={() => {
-               setView('briefing');
-               setCart([]);
-               setSpent(0);
-               setCompliance(100);
-               setLaunchProgress(0);
-               setMissionName("Standard Procurement");
-               setMissionBrief("Execute standard acquisition protocols.");
-               setCustomInput("");
-               setQuartermasterAdvice(null);
-             }}
-             className="text-slate-500 hover:text-white transition-colors text-sm font-medium"
-           >
-             Return to Mission Control
-           </button>
-        </div>
-      )}
-    </div>
-  );
+            const handleMissionSelect = (type, name, brief) => {
+                setMission(type);
+                if (name) setMissionName(name);
+                if (brief) setMissionBrief(brief);
+                setView('loadout');
+                setMessage({ text: "Mission parameters initialized.", type: 'info' });
+            };
 
-  return (
-    <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-blue-500/30 selection:text-blue-200">
-      {/* Background Grid FX */}
-      <div className="fixed inset-0 z-0 pointer-events-none" 
-        style={{ 
-          backgroundImage: 'linear-gradient(rgba(30, 41, 59, 0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(30, 41, 59, 0.5) 1px, transparent 1px)', 
-          backgroundSize: '40px 40px',
-          opacity: 0.2 
-        }}
-      />
-      <div className="fixed inset-0 z-0 pointer-events-none bg-gradient-to-b from-slate-950 via-transparent to-slate-950" />
+            const generateMissionProfile = async () => {
+                if (!customInput.trim()) return;
+                if (!apiKey) {
+                    setMessage({ text: "API Key Required for Mission Architect", type: 'warn' });
+                    setShowApiKeyInput(true);
+                    return;
+                }
+                setIsAiLoading(true);
+                const prompt = `You are a sci-fi Mission Control commander. The user wants to procure items for this government purpose: "${customInput}". 
+                1. Generate a cool military/sci-fi Operation Name.
+                2. Write a 1-sentence tactical briefing.
+                3. Choose the best category from: hardware, software, services.
+                Format as JSON: {"name": "...", "briefing": "...", "category": "..."}`;
 
-      {renderHUD()}
+                try {
+                    const result = await generateContent(prompt, apiKey);
+                    const jsonStr = result.replace(/```json/g, '').replace(/```/g, '').trim();
+                    const data = JSON.parse(jsonStr);
+                    handleMissionSelect(data.category.toLowerCase(), data.name, data.briefing);
+                } catch (e) {
+                    setMessage({ text: "AI Generation failed. Falling back to manual.", type: 'warn' });
+                } finally {
+                    setIsAiLoading(false);
+                }
+            };
 
-      <div className="relative z-10">
-        {view === 'briefing' && renderBriefing()}
-        {view === 'loadout' && renderLoadout()}
-        {view === 'launch' && renderLaunch()}
-      </div>
-    </div>
-  );
-}
+            const consultQuartermaster = async () => {
+                if (!apiKey) {
+                    setMessage({ text: "API Key Required for Quartermaster", type: 'warn' });
+                    setShowApiKeyInput(true);
+                    return;
+                }
+                setIsAiLoading(true);
+                const cartNames = cart.map(i => i.name).join(', ');
+                const prompt = `You are a grumpy but knowledgeable sci-fi Quartermaster. Analyze: [${cartNames}]. Budget: $${spent}/$${budget}. Compliance: ${compliance}%. Give 1-2 sentences of advice.`;
+                const advice = await generateContent(prompt, apiKey);
+                setQuartermasterAdvice(advice);
+                setIsAiLoading(false);
+            };
 
+            const launchMission = () => {
+                setView('launch');
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += 2;
+                    setLaunchProgress(progress);
+                    if (progress >= 100) clearInterval(interval);
+                }, 50);
+            };
 
+            // --- RENDERERS ---
+
+            const renderHUD = () => (
+                <div className="fixed top-0 left-0 right-0 h-20 bg-slate-950/90 border-b border-slate-800 flex items-center px-4 md:px-6 z-50 backdrop-blur-lg justify-between">
+                    <div className="flex items-center gap-4 cursor-pointer" onClick={() => setView('briefing')}>
+                        <div className="bg-blue-600 p-2 rounded-lg"><Icons.Rocket className="text-white w-6 h-6" /></div>
+                        <div>
+                            <h1 className="text-white font-bold tracking-wider text-lg hidden md:block">NASA SEWP VI</h1>
+                            <p className="text-blue-400 text-xs font-mono uppercase">Mission Control</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-6 flex-1 max-w-2xl px-4 md:px-12">
+                        <div className="flex-1 hidden md:block">
+                            <ProgressBar value={spent} max={budget} color={spent > budget ? "bg-red-500" : "bg-blue-500"} label="Budget" />
+                        </div>
+                        <div className="flex-1 hidden md:block">
+                            <ProgressBar value={compliance} max={100} color={compliance < 80 ? (compliance < 50 ? "bg-red-500" : "bg-yellow-500") : "bg-emerald-500"} label="Compliance" />
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <button onClick={() => setShowApiKeyInput(!showApiKeyInput)} className="text-slate-500 hover:text-white transition-colors">
+                            <Icons.Key className={`w-5 h-5 ${apiKey ? 'text-emerald-500' : ''}`} />
+                        </button>
+                        <div className="text-right hidden lg:block">
+                            <div className="text-white font-bold">Agent Logan</div>
+                            <div className="text-slate-500 text-xs">GS-13 Procurement</div>
+                        </div>
+                        <div className="w-10 h-10 bg-slate-800 rounded-full border border-slate-600 flex items-center justify-center text-slate-400 font-bold">AL</div>
+                    </div>
+                </div>
+            );
+
+            return (
+                <div className="min-h-screen">
+                    <div className="fixed inset-0 z-0 pointer-events-none" style={{ backgroundImage: 'linear-gradient(rgba(30, 41, 59, 0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(30, 41, 59, 0.5) 1px, transparent 1px)', backgroundSize: '40px 40px', opacity: 0.2 }}></div>
+                    <div className="fixed inset-0 z-0 pointer-events-none bg-gradient-to-b from-slate-950 via-transparent to-slate-950"></div>
+                    
+                    {renderHUD()}
+
+                    {/* API Key Modal */}
+                    {showApiKeyInput && (
+                        <div className="fixed inset-0 z-[60] bg-black/80 flex items-center justify-center p-4">
+                            <div className="bg-slate-900 border border-slate-700 p-6 rounded-xl max-w-md w-full space-y-4">
+                                <h3 className="text-white font-bold text-lg flex items-center gap-2"><Icons.Key className="w-5 h-5 text-blue-500"/> AI Authentication</h3>
+                                <p className="text-slate-400 text-sm">Enter a Gemini API Key to enable the Mission Architect and Quartermaster features.</p>
+                                <input type="password" value={apiKey} onChange={(e) => setApiKey(e.target.value)} placeholder="Enter key..." className="w-full bg-slate-950 border border-slate-800 rounded p-3 text-white focus:border-blue-500 outline-none font-mono text-sm" />
+                                <div className="flex justify-end gap-2">
+                                    <button onClick={() => setShowApiKeyInput(false)} className="text-slate-400 hover:text-white px-4 py-2 text-sm">Close</button>
+                                    <button onClick={() => setShowApiKeyInput(false)} className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded text-sm font-bold">Authenticate</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="relative z-10 pt-20">
+                        {/* BRIEFING VIEW */}
+                        {view === 'briefing' && (
+                            <div className="flex flex-col items-center justify-center min-h-[calc(100vh-80px)] px-4 pb-12">
+                                <div className="max-w-4xl w-full space-y-8 animate-[fadeIn_0.5s_ease-out]">
+                                    <div className="text-center space-y-4">
+                                        <h2 className="text-4xl md:text-5xl font-black text-white tracking-tight">Select Mission Profile</h2>
+                                        <p className="text-slate-400 text-lg max-w-2xl mx-auto">Identify your objective to initialize procurement protocols.</p>
+                                    </div>
+
+                                    <div className="relative max-w-2xl mx-auto w-full group">
+                                        <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
+                                        <div className="relative bg-slate-900 rounded-lg p-1 flex items-center">
+                                            <div className="pl-4 pr-2"><Icons.Sparkles className="w-5 h-5 text-purple-400 animate-pulse" /></div>
+                                            <input type="text" value={customInput} onChange={(e) => setCustomInput(e.target.value)} placeholder="Or describe mission (e.g., 'Equip a jungle research team')..." className="w-full bg-transparent border-none outline-none text-white placeholder-slate-500 h-12" onKeyDown={(e) => e.key === 'Enter' && generateMissionProfile()} />
+                                            <button onClick={generateMissionProfile} disabled={!customInput || isAiLoading} className="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-md font-medium text-sm transition-colors flex items-center gap-2 whitespace-nowrap mr-1">
+                                                {isAiLoading ? <Icons.Loader2 className="w-4 h-4 animate-spin" /> : 'Generate Mission'}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid md:grid-cols-3 gap-6 mt-8">
+                                        {[
+                                            {id:'hardware', icon: Icons.Server, color:'blue', title:'Hardware Equip', sub:'Servers, Laptops'},
+                                            {id:'software', icon: Icons.Zap, color:'purple', title:'Software License', sub:'SaaS, Cloud'},
+                                            {id:'services', icon: Icons.Briefcase, color:'emerald', title:'Support Services', sub:'Maintenance'}
+                                        ].map(m => (
+                                            <Card key={m.id} onClick={() => handleMissionSelect(m.id)} className="group hover:bg-slate-800/50">
+                                                <div className="h-48 flex flex-col items-center justify-center text-center space-y-4">
+                                                    <div className={`p-4 bg-${m.color}-500/10 rounded-full group-hover:bg-${m.color}-500/20 transition-colors`}>
+                                                        <m.icon className={`w-12 h-12 text-${m.color}-400 group-hover:scale-110 transition-transform duration-300`} />
+                                                    </div>
+                                                    <div><h3 className="text-xl font-bold text-white">{m.title}</h3><p className="text-slate-400 text-sm mt-2">{m.sub}</p></div>
+                                                </div>
+                                            </Card>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* LOADOUT VIEW */}
+                        {view === 'loadout' && (
+                            <div className="px-4 md:px-6 max-w-7xl mx-auto h-[calc(100vh-80px)] flex flex-col md:flex-row gap-8 pb-6 pt-6">
+                                <div className="flex-1 flex flex-col gap-6 h-full overflow-hidden">
+                                    <div className="flex flex-col gap-2 flex-shrink-0">
+                                        <div className="flex justify-between items-end">
+                                            <h2 className="text-2xl font-bold text-white flex items-center gap-2"><span className="text-blue-500">///</span> {missionName}</h2>
+                                            <span className="text-xs font-mono text-blue-400 border border-blue-900 bg-blue-900/20 px-2 py-1 rounded hidden md:inline-block">{mission?.toUpperCase()} PROTOCOL</span>
+                                        </div>
+                                        <p className="text-slate-400 text-sm font-mono border-l-2 border-slate-700 pl-3">{missionBrief}</p>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 overflow-y-auto pr-2 custom-scrollbar flex-1 pb-20 md:pb-0">
+                                        {INVENTORY_ITEMS.map((item) => (
+                                            <Card key={item.id} className="relative group p-4 bg-slate-900/50 hover:bg-slate-800 flex flex-col justify-between">
+                                                {item.risk === 'high' && <div className="absolute top-2 right-2 text-amber-500 animate-pulse"><Icons.AlertTriangle className="w-5 h-5" /></div>}
+                                                <div className="flex items-start gap-4">
+                                                    <div className={`p-3 rounded-lg ${item.risk === 'high' ? 'bg-amber-900/20' : 'bg-slate-800'}`}>
+                                                        <item.icon className={`w-6 h-6 ${item.risk === 'high' ? 'text-amber-500' : 'text-blue-400'}`} />
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="text-white font-bold text-sm">{item.name}</h3>
+                                                        <p className="text-slate-400 text-xs mt-1 leading-relaxed">{item.desc}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="mt-4 flex items-center justify-between">
+                                                    <span className="text-slate-300 font-mono text-sm">${item.cost.toLocaleString()}</span>
+                                                    <button onClick={() => addToCart(item)} className="bg-blue-600 hover:bg-blue-500 text-white text-xs px-3 py-1.5 rounded-md font-medium transition-colors">EQUIP</button>
+                                                </div>
+                                            </Card>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="w-full md:w-96 flex flex-col gap-4 flex-shrink-0 h-1/3 md:h-full">
+                                    <div className="bg-slate-900/90 border border-slate-700 rounded-xl p-6 flex-1 flex flex-col backdrop-blur-md overflow-hidden">
+                                        <div className="flex justify-between items-center mb-4 border-b border-slate-800 pb-2 flex-shrink-0">
+                                            <h3 className="text-slate-400 text-xs font-bold uppercase tracking-widest">Current Loadout</h3>
+                                            <button onClick={consultQuartermaster} disabled={isAiLoading || cart.length === 0} className="text-xs flex items-center gap-1 text-purple-400 hover:text-purple-300 transition-colors disabled:opacity-50">
+                                                <Icons.Bot className="w-3 h-3" /> {isAiLoading ? 'Analyzing...' : 'Tactical Check'}
+                                            </button>
+                                        </div>
+
+                                        {quartermasterAdvice && (
+                                            <div className="mb-4 bg-purple-900/20 border border-purple-500/30 p-3 rounded-lg flex gap-3 animate-[fadeIn_0.3s_ease-out] flex-shrink-0">
+                                                <Icons.Bot className="w-5 h-5 text-purple-400 flex-shrink-0 mt-1" />
+                                                <p className="text-xs text-purple-200 leading-relaxed italic">"{quartermasterAdvice}"</p>
+                                            </div>
+                                        )}
+                                        
+                                        <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar">
+                                            {cart.length === 0 ? (
+                                                <div className="h-full flex flex-col items-center justify-center text-slate-600 space-y-2">
+                                                    <Icons.Package className="w-8 h-8 opacity-50" /><span className="text-sm">Loadout Empty</span>
+                                                </div>
+                                            ) : (
+                                                cart.map((item, idx) => (
+                                                    <div key={idx} className="flex items-center gap-3 bg-slate-950/50 p-3 rounded-lg border border-slate-800 group">
+                                                        <item.icon className="w-4 h-4 text-slate-500" />
+                                                        <div className="flex-1 min-w-0"><div className="text-white text-sm truncate">{item.name}</div><div className="text-slate-500 text-xs font-mono">${item.cost.toLocaleString()}</div></div>
+                                                        <button onClick={() => removeFromCart(idx, item)} className="text-slate-600 hover:text-red-400 transition-colors"><Icons.X className="w-4 h-4" /></button>
+                                                    </div>
+                                                ))
+                                            )}
+                                        </div>
+
+                                        <div className="mt-4 pt-4 border-t border-slate-800 space-y-4 flex-shrink-0">
+                                            <div className="flex justify-between items-end">
+                                                <span className="text-slate-400 text-sm">Total Est.</span>
+                                                <span className="text-2xl font-bold text-white font-mono">${spent.toLocaleString()}</span>
+                                            </div>
+                                            {message && (
+                                                <div className={`p-3 rounded-lg text-xs border ${message.type === 'warn' ? 'bg-amber-900/20 border-amber-800 text-amber-200' : message.type === 'success' ? 'bg-emerald-900/20 border-emerald-800 text-emerald-200' : 'bg-blue-900/20 border-blue-800 text-blue-200'}`}>
+                                                    {message.type === 'warn' && <Icons.AlertTriangle className="w-3 h-3 inline mr-2 mb-0.5" />}
+                                                    {message.type === 'success' && <Icons.CheckCircle className="w-3 h-3 inline mr-2 mb-0.5" />}
+                                                    {message.text}
+                                                </div>
+                                            )}
+                                            <button onClick={() => cart.length > 0 && launchMission()} disabled={cart.length === 0} className={`w-full py-4 rounded-lg font-bold flex items-center justify-center gap-2 transition-all ${cart.length > 0 ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-900/20' : 'bg-slate-800 text-slate-500 cursor-not-allowed'}`}>
+                                                INITIATE RFQ <Icons.ArrowRight className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* LAUNCH VIEW */}
+                        {view === 'launch' && (
+                            <div className="flex flex-col items-center justify-center min-h-[calc(100vh-80px)] px-4">
+                                {launchProgress < 100 ? (
+                                    <div className="max-w-md w-full space-y-8 text-center">
+                                        <div className="relative w-32 h-32 mx-auto">
+                                            <div className="absolute inset-0 border-4 border-slate-800 rounded-full"></div>
+                                            <div className="absolute inset-0 border-4 border-blue-500 rounded-full border-t-transparent animate-spin"></div>
+                                            <Icons.Rocket className="absolute inset-0 m-auto text-white w-12 h-12 animate-pulse" />
+                                        </div>
+                                        <div><h2 className="text-3xl font-bold text-white mb-2">Broadcasting</h2><p className="text-slate-400 font-mono">SEWP GALAXY NETWORK</p></div>
+                                        <div className="space-y-2">
+                                            <div className="flex justify-between text-xs text-blue-400 font-mono uppercase"><span>Encrypting</span><span>{launchProgress}%</span></div>
+                                            <div className="h-2 bg-slate-800 rounded-full overflow-hidden"><div className="h-full bg-blue-500 transition-all duration-75" style={{ width: `${launchProgress}%` }}></div></div>
+                                        </div>
+                                        <div className="text-sm text-slate-500 font-mono animate-pulse">Contacting 47 Approved Small Businesses...</div>
+                                    </div>
+                                ) : (
+                                    <div className="max-w-xl w-full text-center space-y-8 animate-[zoomIn_0.5s_ease-out]">
+                                        <div className="w-32 h-32 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto border border-emerald-500/50 shadow-2xl shadow-emerald-900/20">
+                                            <Icons.CheckCircle className="w-16 h-16 text-emerald-400" />
+                                        </div>
+                                        <div className="space-y-4"><h2 className="text-4xl font-bold text-white">Mission Launched</h2><p className="text-slate-400 text-lg">Your Request for Quote (RFQ #24-9982) has been deployed.</p></div>
+                                        <div className="bg-slate-900/80 border border-slate-700 rounded-xl p-6 text-left space-y-4">
+                                            <div className="flex justify-between border-b border-slate-800 pb-4"><span className="text-white">Compliance</span><span className={`font-mono font-bold ${compliance < 80 ? 'text-amber-500' : 'text-emerald-400'}`}>{compliance}/100</span></div>
+                                            <div className="flex justify-between border-b border-slate-800 pb-4"><span className="text-white">Est. Savings</span><span className="font-mono font-bold text-blue-400">$3,240.00</span></div>
+                                            <div className="flex justify-between"><span className="text-white">XP Gained</span><span className="font-mono font-bold text-purple-400">+450 Procurement XP</span></div>
+                                        </div>
+                                        <button onClick={() => { setView('briefing'); setCart([]); setSpent(0); setCompliance(100); setLaunchProgress(0); setMissionName("Standard Procurement"); setMissionBrief("Execute standard acquisition protocols."); setCustomInput(""); setQuartermasterAdvice(null); }} className="text-slate-500 hover:text-white transition-colors text-sm font-medium">Return to Mission Control</button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
