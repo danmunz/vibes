@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Travel + Lodging</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="shared.js" defer></script>
+  <script src="snow.js" defer></script>
+</head>
+<body>
+  <canvas id="snow-canvas" aria-hidden="true"></canvas>
+  <div id="offline-banner" class="offline-banner" role="status" aria-live="polite" hidden>
+    You are offline. The itinerary still works, but external links need internet.
+  </div>
+
+  <header class="site-header">
+    <div class="nav-shell">
+      <a class="brand" href="index.html">
+        <span class="brand-mark">QC</span>
+        <span class="brand-title">Quebec City Winter</span>
+      </a>
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+      <nav id="site-nav" class="site-nav">
+        <a href="orientation.html">Orientation</a>
+        <a href="map.html">Map</a>
+        <a href="explore.html">Explore</a>
+        <a href="eat.html">Eat</a>
+        <a href="travel.html">Travel</a>
+        <a href="packing.html">Packing</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="hero-card">
+      <p class="eyebrow">Travel + Lodging</p>
+      <h1>Arrivals, Warm Bases, and Winter Reality</h1>
+      <p>Everything you need to move smoothly and stay warm.</p>
+      <div class="hero-meta">
+        <div class="pill">Short transitions</div>
+        <div class="pill">Central hotel</div>
+        <div class="pill">Cold weather prep</div>
+      </div>
+    </div>
+  </section>
+
+  <main>
+    <section class="section" id="weather">
+      <div class="section-header">
+        <h2>Weather First</h2>
+        <p>Plan around the cold and the short daylight window.</p>
+      </div>
+      <div class="panel-grid">
+        <article class="panel">
+          <h3>Temperatures</h3>
+          <p class="muted">Typical highs around 20-30°F, colder evenings.</p>
+          <p class="muted">Wind off the river makes it feel colder.</p>
+        </article>
+        <article class="panel">
+          <h3>Daylight</h3>
+          <p class="muted">Sunrise around 7:30 AM, sunset around 4:15 PM.</p>
+          <p class="muted">Expect glowing afternoons and early evenings.</p>
+        </article>
+        <article class="panel">
+          <h3>Winter Rhythm</h3>
+          <p class="muted">Short walks, warm breaks, and one highlight per day.</p>
+        </article>
+      </div>
+      <div class="cta-row">
+        <a href="packing.html">Jump to packing essentials</a>
+      </div>
+    </section>
+
+    <section class="section" id="travel-itinerary">
+      <div class="section-header">
+        <h2>Travel Itinerary</h2>
+        <p>Keep transfers simple and warm.</p>
+      </div>
+      <div class="panel-grid">
+        <article class="panel">
+          <h3>Outbound · Mon Dec 29</h3>
+          <ul>
+            <li>AC 8822 DCA → YUL (11:05 AM-12:46 PM)</li>
+            <li>Transfer to Gare Central Station (grab food)</li>
+            <li>VIA Rail #26 Montreal → Quebec City (4:42 PM-8:19 PM)</li>
+            <li>Gare du Palais → Hilton Quebec City</li>
+          </ul>
+          <p class="muted">Maps: 
+            <a data-external="true" data-maps="true" href="https://www.google.com/maps/search/?api=1&query=Ronald+Reagan+Washington+National+Airport" target="_blank" rel="noopener">DCA</a> ·
+            <a data-external="true" data-maps="true" href="https://www.google.com/maps/search/?api=1&query=Montreal+Trudeau+International+Airport" target="_blank" rel="noopener">YUL</a> ·
+            <a data-external="true" data-maps="true" href="https://www.google.com/maps/search/?api=1&query=Gare+Central+Montreal" target="_blank" rel="noopener">Gare Central</a> ·
+            <a data-external="true" data-maps="true" href="https://www.google.com/maps/search/?api=1&query=Gare+du+Palais+Quebec+City+QC" target="_blank" rel="noopener">Gare du Palais</a>
+          </p>
+          <a href="map.html?focus=gare-palais">See Gare du Palais on the map</a>
+        </article>
+        <article class="panel">
+          <h3>Return · Fri Jan 2</h3>
+          <ul>
+            <li>Hilton Quebec City → Gare du Palais</li>
+            <li>VIA Rail #29 Quebec City → Montreal (12:32 PM-3:54 PM)</li>
+            <li>Transfer to YUL airport (eat dinner)</li>
+            <li>AC 8825 YUL → DCA (8:00 PM-9:56 PM)</li>
+          </ul>
+          <p class="muted">Maps: 
+            <a data-external="true" data-maps="true" href="https://www.google.com/maps/search/?api=1&query=Gare+du+Palais+Quebec+City+QC" target="_blank" rel="noopener">Gare du Palais</a> ·
+            <a data-external="true" data-maps="true" href="https://www.google.com/maps/search/?api=1&query=Gare+Central+Montreal" target="_blank" rel="noopener">Gare Central</a> ·
+            <a data-external="true" data-maps="true" href="https://www.google.com/maps/search/?api=1&query=Montreal+Trudeau+International+Airport" target="_blank" rel="noopener">YUL</a> ·
+            <a data-external="true" data-maps="true" href="https://www.google.com/maps/search/?api=1&query=Ronald+Reagan+Washington+National+Airport" target="_blank" rel="noopener">DCA</a>
+          </p>
+          <a href="map.html?focus=gare-palais">See Gare du Palais on the map</a>
+        </article>
+        <article class="panel">
+          <h3>Transit Notes</h3>
+          <p class="muted">Plan warm breaks at stations. Winter streets can be slick.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="current-links">
+      <div class="section-header">
+        <h2>Current Links</h2>
+        <p>Open the live status pages when you need real-time updates.</p>
+      </div>
+      <div class="panel-grid">
+        <article class="panel">
+          <h3>Quebec City Weather</h3>
+          <p class="muted">Live forecast and current conditions.</p>
+          <div class="cta-row">
+            <a data-external="true" href="https://www.wunderground.com/forecast/ca/quebec-city" target="_blank" rel="noopener">Weather Underground</a>
+          </div>
+        </article>
+        <article class="panel">
+          <h3>TripIt Itinerary</h3>
+          <p class="muted">Open the shared itinerary for live updates.</p>
+          <div class="cta-row">
+            <a data-external="true" href="https://www.tripit.com/p/7C2444FBD80D4A7AF24C97E902E43726" target="_blank" rel="noopener">TripIt share</a>
+          </div>
+        </article>
+        <article class="panel">
+          <h3>VIA Rail Status</h3>
+          <p class="muted">Check each train schedule and delays.</p>
+          <div class="cta-row">
+            <a data-external="true" href="https://www.viarail.ca/en/plan/train-schedules?tsiTn=26&tsiDate=2025-12-29" target="_blank" rel="noopener">Train 26 (Montreal → Quebec)</a>
+            <a data-external="true" href="https://www.viarail.ca/en/plan/train-schedules?tsiTn=29&tsiDate=2026-01-02" target="_blank" rel="noopener">Train 29 (Quebec → Montreal)</a>
+          </div>
+        </article>
+        <article class="panel">
+          <h3>Flight Status</h3>
+          <p class="muted">Air Canada status pages for your flights.</p>
+          <div class="cta-row">
+            <a data-external="true" href="https://www.aircanada.com/flifo/flight-details?f=8822&t=20251229&o=DCA&c=AC&l=en" target="_blank" rel="noopener">AC 8822 (DCA → YUL)</a>
+            <a data-external="true" href="https://www.aircanada.com/flifo/flight-details?f=8825&t=20260102&o=YUL&c=AC&l=en" target="_blank" rel="noopener">AC 8825 (YUL → DCA)</a>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="lodging">
+      <div class="section-header">
+        <h2>Lodging</h2>
+      </div>
+      <div class="panel-grid">
+        <article class="panel">
+          <h3>Hilton Quebec City</h3>
+          <p>
+            1100 Rene Levesque East. Two queen beds, Parliament view. Walkable to Old Quebec.
+            Heated rooftop pool, fitness center, and restaurants.
+          </p>
+          <p class="muted">Nearby: 
+            <a data-external="true" data-maps="true" href="https://www.google.com/maps/search/?api=1&query=Porte+Saint-Jean+Quebec+City+QC" target="_blank" rel="noopener">Porte Saint-Jean</a> ·
+            <a data-external="true" data-maps="true" href="https://www.google.com/maps/search/?api=1&query=Parliament+Building+Quebec+City+QC" target="_blank" rel="noopener">Parliament Building</a>
+          </p>
+          <a data-external="true" data-maps="true" href="https://www.google.com/maps/search/?api=1&query=Hilton+Quebec+City" target="_blank" rel="noopener">Google Maps</a>
+          <a href="map.html?focus=hilton">See Hilton on the map</a>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>Arrive, settle, and keep the pace gentle.</p>
+  </footer>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden>
+    You are offline. Connect to open external links.
+  </div>
+</body>
+</html>

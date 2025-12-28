@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Explore Activities</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="shared.js" defer></script>
+  <script src="snow.js" defer></script>
+  <script src="data.js" defer></script>
+  <script src="explore.js" defer></script>
+</head>
+<body>
+  <canvas id="snow-canvas" aria-hidden="true"></canvas>
+  <div id="offline-banner" class="offline-banner" role="status" aria-live="polite" hidden>
+    You are offline. The itinerary still works, but external links need internet.
+  </div>
+
+  <header class="site-header">
+    <div class="nav-shell">
+      <a class="brand" href="index.html">
+        <span class="brand-mark">QC</span>
+        <span class="brand-title">Quebec City Winter</span>
+      </a>
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+      <nav id="site-nav" class="site-nav">
+        <a href="orientation.html">Orientation</a>
+        <a href="map.html">Map</a>
+        <a href="explore.html">Explore</a>
+        <a href="eat.html">Eat</a>
+        <a href="travel.html">Travel</a>
+        <a href="packing.html">Packing</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="hero-card">
+      <p class="eyebrow">Explore</p>
+      <h1>Do Something Fun</h1>
+      <p>Snowy streets, river views, and easy adventures close to Old Quebec.</p>
+      <div class="hero-meta">
+        <div class="pill">Pick a vibe</div>
+        <div class="pill">Save favorites</div>
+        <div class="pill">Keep it flexible</div>
+      </div>
+    </div>
+  </section>
+
+  <main>
+    <section class="section">
+      <div class="section-header">
+        <h2>Idea Explorer</h2>
+        <p>Filter by mood, open cards for details, and save favorites.</p>
+      </div>
+      <div class="filters" aria-label="Activity filters">
+        <button class="chip is-active" data-filter="all">All</button>
+        <button class="chip" data-filter="snowy">Snowy</button>
+        <button class="chip" data-filter="historic">Historic</button>
+        <button class="chip" data-filter="views">Views</button>
+        <button class="chip" data-filter="family">Family</button>
+        <button class="chip" data-filter="cozy">Cozy</button>
+        <button class="chip" data-filter="culture">Culture</button>
+        <button class="chip" data-filter="quick">Quick stop</button>
+      </div>
+      <div class="muted" id="explore-status"></div>
+      <div class="explore-grid" id="explore-grid"></div>
+      <aside class="shortlist">
+        <h3>Your Shortlist</h3>
+        <p class="muted">Tap Save on a card to stash it here.</p>
+        <div class="shortlist-grid" id="shortlist-grid"></div>
+      </aside>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>Short walks, warm breaks, and one highlight at a time.</p>
+  </footer>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden>
+    You are offline. Connect to open external links.
+  </div>
+</body>
+</html>

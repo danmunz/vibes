@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quebec City Winter Itinerary</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="shared.js" defer></script>
+  <script src="snow.js" defer></script>
+</head>
+<body>
+  <canvas id="snow-canvas" aria-hidden="true"></canvas>
+  <div id="offline-banner" class="offline-banner" role="status" aria-live="polite" hidden>
+    You are offline. The itinerary still works, but external links need internet.
+  </div>
+
+  <header class="site-header">
+    <div class="nav-shell">
+      <a class="brand" href="index.html">
+        <span class="brand-mark">QC</span>
+        <span class="brand-title">Quebec City Winter</span>
+      </a>
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+      <nav id="site-nav" class="site-nav">
+        <a href="orientation.html">Orientation</a>
+        <a href="map.html">Map</a>
+        <a href="explore.html">Explore</a>
+        <a href="eat.html">Eat</a>
+        <a href="travel.html">Travel</a>
+        <a href="packing.html">Packing</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="hero-card">
+      <p class="eyebrow">Les Munzes vont au Quebec · Dec 29, 2025 - Jan 2, 2026</p>
+      <h1>Quebec City in Winter</h1>
+      <p>
+        A snow-dusted, candlelit city of stone walls, warm cafes, and old-world streets.
+        This itinerary is a choose-your-own-adventure guide, not a rigid schedule.
+      </p>
+      <div class="hero-meta">
+        <div class="pill">Old Quebec basecamp</div>
+        <div class="pill">Cozy + historic</div>
+        <div class="pill">Family friendly</div>
+        <div class="pill">Hot cocoa mandatory</div>
+      </div>
+      <div class="top-tasks">
+        <div class="task-card">
+          <p class="eyebrow">I want to...</p>
+          <a href="travel.html">Get travel info</a>
+          <p class="muted">Flights, trains, hotel details, and winter tips.</p>
+        </div>
+        <div class="task-card">
+          <p class="eyebrow">I want to...</p>
+          <a href="eat.html">Eat something good</a>
+          <p class="muted">Breakfast, dinner, sweets, and cozy warmups.</p>
+        </div>
+        <div class="task-card">
+          <p class="eyebrow">I want to...</p>
+          <a href="explore.html">Do something fun</a>
+          <p class="muted">Snowy walks, views, and family-friendly highlights.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <main>
+    <section class="section">
+      <div class="section-header">
+        <h2>Trip Snapshot</h2>
+        <p>Essential logistics and the winter forecast up top.</p>
+      </div>
+      <div class="panel-grid">
+        <article class="panel">
+          <h3>Travel In</h3>
+          <ul>
+            <li>AC 8822 DCA → YUL (11:05 AM-12:46 PM)</li>
+            <li>Transfer to Gare Central Station (grab food)</li>
+            <li>VIA Rail #26 Montreal → Quebec City (4:42 PM-8:19 PM)</li>
+            <li>Gare du Palais → Hilton Quebec City</li>
+          </ul>
+        </article>
+        <article class="panel">
+          <h3>Lodging</h3>
+          <p>
+            Hilton Quebec City. Two queen beds, Parliament view, and a warm base near Porte Saint-Jean.
+          </p>
+          <a data-external="true" data-maps="true" href="https://www.google.com/maps/search/?api=1&query=Hilton+Quebec+City" target="_blank" rel="noopener">Google Maps</a>
+        </article>
+        <article class="panel">
+          <h3>Weather</h3>
+          <p class="muted">Expect 20-30°F highs, colder evenings, and river wind.</p>
+          <p class="muted">Plan short walks and cafe warmups.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-header">
+        <h2>Quebec City Orientation</h2>
+        <p>Start with the story, the geography, and the must-know city DNA.</p>
+      </div>
+      <div class="panel-grid">
+        <article class="panel">
+          <h3>Upper vs Lower Town</h3>
+          <p class="muted">Cliffs, walls, and grand views above. Riverfront charm below.</p>
+          <a href="orientation.html">Explore the city orientation</a>
+        </article>
+        <article class="illustration">
+          <svg viewBox="0 0 640 260" aria-hidden="true">
+            <defs>
+              <linearGradient id="sky" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%" stop-color="#f5f8fb" />
+                <stop offset="100%" stop-color="#e9eff5" />
+              </linearGradient>
+              <linearGradient id="river" x1="0" x2="1" y1="0" y2="1">
+                <stop offset="0%" stop-color="#86b3c8" />
+                <stop offset="100%" stop-color="#6f93b1" />
+              </linearGradient>
+              <linearGradient id="cliff" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%" stop-color="#d4c1aa" />
+                <stop offset="100%" stop-color="#b5957a" />
+              </linearGradient>
+              <pattern id="snow-dust" width="26" height="26" patternUnits="userSpaceOnUse">
+                <circle cx="6" cy="6" r="1.2" fill="rgba(255,255,255,0.6)" />
+                <circle cx="18" cy="12" r="1" fill="rgba(255,255,255,0.5)" />
+              </pattern>
+            </defs>
+            <rect width="640" height="260" fill="url(#sky)" />
+            <rect width="640" height="260" fill="url(#snow-dust)" opacity="0.5" />
+            <path d="M0,168 C120,150 210,165 320,148 C430,130 520,155 640,138 L640,260 L0,260 Z" fill="url(#river)" />
+            <path d="M0,0 H640 V150 C520,150 430,140 320,160 C210,180 120,170 0,150 Z" fill="#e8dccd" />
+            <path d="M120,126 C220,96 360,108 480,80 C540,66 600,74 640,66 L640,134 C520,148 430,158 320,172 C210,188 150,184 120,176 Z" fill="url(#cliff)" />
+            <path d="M180,144 L260,110 L320,130 L300,166 L200,166 Z" fill="#bfa48a" />
+            <rect x="268" y="122" width="18" height="38" fill="#7b4b2f" />
+            <path d="M340,102 L410,86 L458,104 L442,128 L360,128 Z" fill="#c7aa8f" />
+            <rect x="410" y="92" width="16" height="36" fill="#7b4b2f" />
+            <path d="M388,70 L408,56 L428,70 L418,82 L398,82 Z" fill="#c2a24e" />
+            <path d="M450,78 L490,62 L528,78 L518,98 L462,98 Z" fill="#bfa78e" />
+            <rect x="485" y="70" width="12" height="28" fill="#7b4b2f" />
+            <path d="M70,156 L130,132 L170,148 L150,170 L90,170 Z" fill="#d1b79f" />
+            <rect x="120" y="138" width="10" height="20" fill="#82563b" />
+            <rect x="86" y="154" width="18" height="12" fill="#a0846b" />
+            <rect x="104" y="148" width="16" height="18" fill="#9b7d63" />
+            <rect x="146" y="150" width="18" height="16" fill="#a38a72" />
+            <path d="M300,170 L360,182 L420,176 L480,190 L540,184 L620,198 L620,210 L300,210 Z" fill="#d8e2ea" opacity="0.7" />
+            <path d="M280,136 L320,150" stroke="#5a4b3f" stroke-width="3" />
+            <circle cx="86" cy="78" r="16" fill="#2b4338" />
+            <circle cx="110" cy="86" r="12" fill="#314f3f" />
+            <circle cx="520" cy="60" r="10" fill="#c2a24e" />
+            <text x="28" y="154" fill="#3f3a35" font-size="14">St. Lawrence River</text>
+          </svg>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-header">
+        <h2>Interactive Map</h2>
+        <p>Pinch, zoom, and explore all landmarks with clustering like AllTrails.</p>
+      </div>
+      <div class="panel-grid">
+        <article class="panel">
+          <h3>All Landmarks</h3>
+          <p class="muted">Attractions, restaurants, desserts, hotel, and transit points.</p>
+          <a href="map.html">Open the map explorer</a>
+        </article>
+        <article class="panel">
+          <h3>Snowy Walks + Views</h3>
+          <p class="muted">Terrasse Dufferin, Chateau Frontenac, and the riverfront glow.</p>
+          <a href="explore.html">See the experience ideas</a>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>Bon voyage. Stay warm, walk slow, and say yes to hot chocolate.</p>
+  </footer>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden>
+    You are offline. Connect to open external links.
+  </div>
+</body>
+</html>

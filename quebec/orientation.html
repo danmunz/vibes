@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quebec City Orientation</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="shared.js" defer></script>
+  <script src="snow.js" defer></script>
+  <script src="orientation.js" defer></script>
+</head>
+<body>
+  <canvas id="snow-canvas" aria-hidden="true"></canvas>
+  <div id="offline-banner" class="offline-banner" role="status" aria-live="polite" hidden>
+    You are offline. The itinerary still works, but external links need internet.
+  </div>
+
+  <header class="site-header">
+    <div class="nav-shell">
+      <a class="brand" href="index.html">
+        <span class="brand-mark">QC</span>
+        <span class="brand-title">Quebec City Winter</span>
+      </a>
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+      <nav id="site-nav" class="site-nav">
+        <a href="orientation.html">Orientation</a>
+        <a href="map.html">Map</a>
+        <a href="explore.html">Explore</a>
+        <a href="eat.html">Eat</a>
+        <a href="travel.html">Travel</a>
+        <a href="packing.html">Packing</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="hero-card">
+      <p class="eyebrow">Orientation</p>
+      <h1>Quebec City, Layer by Layer</h1>
+      <p>
+        Founded in 1608, Quebec City is the heart of French Canada. The old city is compact, walkable,
+        and framed by the St. Lawrence River. Upper Town crowns the cliffs; Lower Town hugs the port.
+      </p>
+      <div class="hero-meta">
+        <div class="pill">UNESCO World Heritage</div>
+        <div class="pill">Fortified city walls</div>
+        <div class="pill">French-Canadian culture</div>
+      </div>
+    </div>
+  </section>
+
+  <main>
+    <section class="section">
+      <div class="section-header">
+        <h2>City DNA: Upper vs Lower Town</h2>
+        <p>Tap to switch perspectives and learn how the city is shaped.</p>
+      </div>
+      <div class="timeline">
+        <div class="timeline-buttons" id="town-buttons">
+          <button class="is-active" data-town="upper">Upper Town</button>
+          <button data-town="lower">Lower Town</button>
+          <button data-town="river">Riverfront</button>
+        </div>
+        <div class="timeline-panel" id="town-panel"></div>
+      </div>
+      <div class="cta-row">
+        <a href="map.html">See neighborhoods on the map</a>
+        <a href="explore.html" class="button secondary">See nearby experiences</a>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-header">
+        <h2>Map Anchors</h2>
+        <p>Quick Google Maps links to core landmarks and neighborhoods.</p>
+      </div>
+      <div class="panel">
+        <div class="cta-row">
+          <a data-external="true" data-maps="true" href="https://www.google.com/maps/search/?api=1&query=Old+Quebec+City+QC" target="_blank" rel="noopener">Old Quebec</a>
+          <a data-external="true" data-maps="true" href="https://www.google.com/maps/search/?api=1&query=Upper+Town+Quebec+City+QC" target="_blank" rel="noopener">Upper Town</a>
+          <a data-external="true" data-maps="true" href="https://www.google.com/maps/search/?api=1&query=Lower+Town+Quebec+City+QC" target="_blank" rel="noopener">Lower Town</a>
+          <a data-external="true" data-maps="true" href="https://www.google.com/maps/search/?api=1&query=St+Lawrence+River+Quebec+City+QC" target="_blank" rel="noopener">St. Lawrence River</a>
+          <a data-external="true" data-maps="true" href="https://www.google.com/maps/search/?api=1&query=Place+Royale+Quebec+City+QC" target="_blank" rel="noopener">Place Royale</a>
+          <a data-external="true" data-maps="true" href="https://www.google.com/maps/search/?api=1&query=Parliament+Building+Quebec+City+QC" target="_blank" rel="noopener">Parliament Building</a>
+          <a data-external="true" data-maps="true" href="https://www.google.com/maps/search/?api=1&query=Porte+Saint-Jean+Quebec+City+QC" target="_blank" rel="noopener">Porte Saint-Jean</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-header">
+        <h2>Quebec City Timeline</h2>
+        <p>14 moments that stack into the city you will walk through. Tap a year to travel.</p>
+      </div>
+      <div class="timeline">
+        <div class="timeline-buttons" id="timeline-buttons"></div>
+        <div class="timeline-panel" id="timeline-panel"></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-header">
+        <h2>Quebec City Trivia</h2>
+        <p>Mini facts for curious explorers.</p>
+      </div>
+      <div class="trivia">
+        <div class="trivia-card" id="trivia-card"></div>
+        <div class="cta-row">
+          <button class="button secondary" type="button" id="trivia-prev">Back</button>
+          <button class="button" type="button" id="trivia-next">Next fact</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-header">
+        <h2>Quick Quiz</h2>
+        <p>Ten questions to lock in your bearings.</p>
+      </div>
+      <form class="quiz" id="quiz-form">
+        <div class="quiz-card" data-answer="b">
+          <h3>1. Which river defines Quebec City?</h3>
+          <label><input type="radio" name="q1" value="a"> Ottawa River</label><br>
+          <label><input type="radio" name="q1" value="b"> St. Lawrence River</label><br>
+          <label><input type="radio" name="q1" value="c"> Saguenay River</label>
+        </div>
+        <div class="quiz-card" data-answer="c">
+          <h3>2. Upper Town sits...</h3>
+          <label><input type="radio" name="q2" value="a"> Below the riverfront</label><br>
+          <label><input type="radio" name="q2" value="b"> On the far side of the plains</label><br>
+          <label><input type="radio" name="q2" value="c"> Above the cliffs</label>
+        </div>
+        <div class="quiz-card" data-answer="a">
+          <h3>3. Quebec City was founded in...</h3>
+          <label><input type="radio" name="q3" value="a"> 1608</label><br>
+          <label><input type="radio" name="q3" value="b"> 1867</label><br>
+          <label><input type="radio" name="q3" value="c"> 1701</label>
+        </div>
+        <div class="quiz-card" data-answer="b">
+          <h3>4. The boardwalk overlooking the river is...</h3>
+          <label><input type="radio" name="q4" value="a"> Rue du Tresor</label><br>
+          <label><input type="radio" name="q4" value="b"> Terrasse Dufferin</label><br>
+          <label><input type="radio" name="q4" value="c"> Place d'Youville</label>
+        </div>
+        <div class="quiz-card" data-answer="a">
+          <h3>5. The cable car between Upper and Lower Town is...</h3>
+          <label><input type="radio" name="q5" value="a"> Funiculaire du Vieux-Quebec</label><br>
+          <label><input type="radio" name="q5" value="b"> Traverse de Levis</label><br>
+          <label><input type="radio" name="q5" value="c"> Metro de Quebec</label>
+        </div>
+        <div class="quiz-card" data-answer="c">
+          <h3>6. The large park tied to the 1759 battle is...</h3>
+          <label><input type="radio" name="q6" value="a"> Parc de la Chute-Montmorency</label><br>
+          <label><input type="radio" name="q6" value="b"> Parc Jacques-Cartier</label><br>
+          <label><input type="radio" name="q6" value="c"> Plains of Abraham</label>
+        </div>
+        <div class="quiz-card" data-answer="b">
+          <h3>7. The iconic hotel above the river is...</h3>
+          <label><input type="radio" name="q7" value="a"> Hilton Quebec City</label><br>
+          <label><input type="radio" name="q7" value="b"> Chateau Frontenac</label><br>
+          <label><input type="radio" name="q7" value="c"> Le Concorde</label>
+        </div>
+        <div class="quiz-card" data-answer="a">
+          <h3>8. Old Quebec is recognized by UNESCO for...</h3>
+          <label><input type="radio" name="q8" value="a"> Preserved fortifications and historic core</label><br>
+          <label><input type="radio" name="q8" value="b"> Modern skyline and nightlife</label><br>
+          <label><input type="radio" name="q8" value="c"> Ski resorts within the city</label>
+        </div>
+        <div class="quiz-card" data-answer="b">
+          <h3>9. Quebec City is the capital of...</h3>
+          <label><input type="radio" name="q9" value="a"> Ontario</label><br>
+          <label><input type="radio" name="q9" value="b"> Quebec</label><br>
+          <label><input type="radio" name="q9" value="c"> New Brunswick</label>
+        </div>
+        <div class="quiz-card" data-answer="c">
+          <h3>10. The main language you will hear in Old Quebec is...</h3>
+          <label><input type="radio" name="q10" value="a"> Spanish</label><br>
+          <label><input type="radio" name="q10" value="b"> English</label><br>
+          <label><input type="radio" name="q10" value="c"> French</label>
+        </div>
+        <button class="button" type="submit">Check answers</button>
+        <p class="quiz-result" id="quiz-result"></p>
+      </form>
+    </section>
+
+    <section class="section">
+      <div class="section-header">
+        <h2>Faces of Quebec</h2>
+        <p>Historic figures and community archetypes who shaped the city and its culture.</p>
+      </div>
+      <div class="figure-grid">
+        <article class="figure-card">
+          <svg viewBox="0 0 240 200" aria-hidden="true">
+            <rect width="240" height="200" fill="#f5efe6" />
+            <path d="M30,180 Q120,120 210,180 Z" fill="#b98b6a" />
+            <ellipse cx="120" cy="92" rx="36" ry="44" fill="#d6b89b" />
+            <path d="M86,122 Q120,150 154,122 Q120,136 86,122 Z" fill="#8a5b3b" />
+            <rect x="64" y="50" width="112" height="24" rx="10" fill="#4f5662" />
+            <rect x="90" y="28" width="60" height="24" rx="8" fill="#5c6470" />
+            <path d="M98,102 Q120,112 142,102" stroke="#9b6a4f" stroke-width="4" fill="none" />
+          </svg>
+          <h3>Samuel de Champlain</h3>
+          <p class="muted">Founder of Quebec City in 1608, known as the Father of New France.</p>
+        </article>
+        <article class="figure-card">
+          <svg viewBox="0 0 240 200" aria-hidden="true">
+            <rect width="240" height="200" fill="#f3efe9" />
+            <path d="M24,182 Q120,120 216,182 Z" fill="#8c6f58" />
+            <path d="M70,58 Q120,24 170,58 L170,128 Q120,156 70,128 Z" fill="#3a2f2a" />
+            <ellipse cx="120" cy="92" rx="34" ry="42" fill="#d2b9a2" />
+            <path d="M88,130 L152,130 L140,176 L100,176 Z" fill="#cbb39a" />
+            <path d="M100,110 Q120,120 140,110" stroke="#8a5b3b" stroke-width="4" fill="none" />
+          </svg>
+          <h3>Louis de Buade de Frontenac</h3>
+          <p class="muted">Governor of New France who fortified Quebec and lent his name to the Chateau.</p>
+        </article>
+        <article class="figure-card">
+          <svg viewBox="0 0 240 200" aria-hidden="true">
+            <rect width="240" height="200" fill="#f2eee7" />
+            <path d="M60,36 Q120,4 180,36 L170,186 L70,186 Z" fill="#d7d0c8" />
+            <ellipse cx="120" cy="96" rx="34" ry="44" fill="#d9bda6" />
+            <path d="M78,120 Q120,148 162,120 L150,186 L90,186 Z" fill="#7a6a5f" />
+            <path d="M104,106 Q120,114 136,106" stroke="#9c6d55" stroke-width="4" fill="none" />
+          </svg>
+          <h3>Marie de l'Incarnation</h3>
+          <p class="muted">Educator and Ursuline leader who helped establish schools in the city.</p>
+        </article>
+        <article class="figure-card">
+          <svg viewBox="0 0 240 200" aria-hidden="true">
+            <rect width="240" height="200" fill="#f4efe7" />
+            <polygon points="120,20 152,70 120,92 88,70" fill="#c2a24e" />
+            <ellipse cx="120" cy="94" rx="34" ry="44" fill="#d2b59a" />
+            <path d="M70,150 L170,150 L150,190 L90,190 Z" fill="#7b5c46" />
+            <rect x="104" y="48" width="32" height="16" fill="#c2a24e" />
+            <path d="M102,110 Q120,120 138,110" stroke="#8a5b3b" stroke-width="4" fill="none" />
+          </svg>
+          <h3>Bishop Laval</h3>
+          <p class="muted">First bishop of Quebec and founder of the seminary.</p>
+        </article>
+        <article class="figure-card">
+          <svg viewBox="0 0 240 200" aria-hidden="true">
+            <rect width="240" height="200" fill="#f6efe8" />
+            <path d="M60,80 Q120,40 180,80 L180,110 Q120,140 60,110 Z" fill="#3a2f2a" />
+            <ellipse cx="120" cy="100" rx="34" ry="44" fill="#c99878" />
+            <rect x="70" y="70" width="100" height="12" fill="#b0723f" />
+            <path d="M92,146 L120,176 L148,146" fill="none" stroke="#3a2f2a" stroke-width="6" />
+            <path d="M70,160 L170,160 L150,196 L90,196 Z" fill="#6b4f3b" />
+          </svg>
+          <h3>Huron-Wendat Knowledge Keeper</h3>
+          <p class="muted">Indigenous communities have shaped the region's culture for centuries.</p>
+        </article>
+        <article class="figure-card">
+          <svg viewBox="0 0 240 200" aria-hidden="true">
+            <rect width="240" height="200" fill="#f2eee7" />
+            <path d="M70,60 Q120,20 170,60 L170,120 Q120,150 70,120 Z" fill="#4a3c36" />
+            <ellipse cx="120" cy="92" rx="34" ry="44" fill="#d8b08a" />
+            <path d="M70,150 L170,150 L150,190 L90,190 Z" fill="#5a3e2f" />
+            <path d="M80,140 L160,140" stroke="#c2a24e" stroke-width="6" />
+            <path d="M104,108 Q120,116 136,108" stroke="#915f44" stroke-width="4" fill="none" />
+          </svg>
+          <h3>Marquis de Montcalm</h3>
+          <p class="muted">French commander associated with the 1759 battle.</p>
+        </article>
+        <article class="figure-card">
+          <svg viewBox="0 0 240 200" aria-hidden="true">
+            <rect width="240" height="200" fill="#f4efe8" />
+            <path d="M68,58 Q120,26 172,58 L172,118 Q120,146 68,118 Z" fill="#2f2a28" />
+            <ellipse cx="120" cy="92" rx="34" ry="44" fill="#d8b9a1" />
+            <path d="M70,150 L170,150 L150,190 L90,190 Z" fill="#3e3c46" />
+            <path d="M92,140 L148,140" stroke="#c2a24e" stroke-width="6" />
+            <path d="M104,108 Q120,116 136,108" stroke="#8a5b3b" stroke-width="4" fill="none" />
+          </svg>
+          <h3>General James Wolfe</h3>
+          <p class="muted">British commander linked to the 1759 battle on the plains.</p>
+        </article>
+        <article class="figure-card">
+          <svg viewBox="0 0 240 200" aria-hidden="true">
+            <rect width="240" height="200" fill="#f5efe6" />
+            <path d="M70,54 Q120,22 170,54 L170,108 Q120,136 70,108 Z" fill="#4a3b2f" />
+            <ellipse cx="120" cy="92" rx="34" ry="44" fill="#d3ad90" />
+            <path d="M60,150 L180,150 L160,190 L80,190 Z" fill="#8b6b52" />
+            <path d="M82,140 Q120,160 158,140" stroke="#cbb39a" stroke-width="8" fill="none" />
+            <path d="M104,108 Q120,116 136,108" stroke="#8a5b3b" stroke-width="4" fill="none" />
+          </svg>
+          <h3>Place Royale Merchant</h3>
+          <p class="muted">Lower Town merchants who turned the port into a trading hub.</p>
+        </article>
+        <article class="figure-card">
+          <svg viewBox="0 0 240 200" aria-hidden="true">
+            <rect width="240" height="200" fill="#f3efe9" />
+            <path d="M80,50 Q120,28 160,50 L160,112 Q120,134 80,112 Z" fill="#3b3a3f" />
+            <ellipse cx="120" cy="90" rx="34" ry="44" fill="#d7b79c" />
+            <path d="M70,150 L170,150 L150,190 L90,190 Z" fill="#4a4f5a" />
+            <polygon points="120,126 132,150 108,150" fill="#c2a24e" />
+            <path d="M104,106 Q120,114 136,106" stroke="#8a5b3b" stroke-width="4" fill="none" />
+          </svg>
+          <h3>Railway-Era Hotelier</h3>
+          <p class="muted">Travel and rail shaped the grand hotel era in Upper Town.</p>
+        </article>
+        <article class="figure-card">
+          <svg viewBox="0 0 240 200" aria-hidden="true">
+            <rect width="240" height="200" fill="#f0f4fb" />
+            <circle cx="120" cy="92" r="42" fill="#f7fbff" />
+            <rect x="70" y="40" width="100" height="28" rx="12" fill="#b33f3a" />
+            <rect x="90" y="22" width="60" height="20" rx="10" fill="#d8b36a" />
+            <path d="M60,150 L180,150 L160,190 L80,190 Z" fill="#b33f3a" />
+            <circle cx="108" cy="90" r="4" fill="#6f93b1" />
+            <circle cx="132" cy="90" r="4" fill="#6f93b1" />
+          </svg>
+          <h3>Bonhomme Carnaval</h3>
+          <p class="muted">The winter carnival mascot who celebrates the city's snow-season joy.</p>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>Next, head to the map to see where everything lives.</p>
+  </footer>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden>
+    You are offline. Connect to open external links.
+  </div>
+</body>
+</html>
