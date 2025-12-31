@@ -1,0 +1,909 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kalahari Waterslide Day Tracker</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --sand: #f7f1e3;
+        --sun: #ffb347;
+        --coral: #ff6f61;
+        --ocean: #1a9e9a;
+        --lagoon: #0b6b66;
+        --sky: #cfe9f2;
+        --ink: #1f2a33;
+        --card: rgba(255, 255, 255, 0.92);
+        --shadow: 0 18px 40px rgba(15, 36, 45, 0.12);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Futura", "Avenir Next", "Trebuchet MS", sans-serif;
+        color: var(--ink);
+        background: radial-gradient(circle at top right, #fef1c7 0%, #f7f1e3 40%, #d7eef3 100%);
+        position: relative;
+        overflow-x: hidden;
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background-image: linear-gradient(120deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0) 40%),
+          repeating-linear-gradient(25deg, rgba(26, 158, 154, 0.08) 0, rgba(26, 158, 154, 0.08) 2px, transparent 2px, transparent 12px);
+        pointer-events: none;
+        z-index: -1;
+      }
+
+      nav {
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        backdrop-filter: blur(12px);
+        background: rgba(247, 241, 227, 0.8);
+        border-bottom: 1px solid rgba(15, 36, 45, 0.08);
+      }
+
+      .nav-inner {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 12px 20px;
+        display: grid;
+        gap: 10px;
+        align-items: center;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+      }
+
+      .nav-title {
+        font-size: 1rem;
+        text-transform: uppercase;
+      }
+
+      .nav-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .nav-links a {
+        text-decoration: none;
+        font-size: 0.82rem;
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: rgba(26, 158, 154, 0.12);
+        color: var(--lagoon);
+      }
+
+      section {
+        scroll-margin-top: 120px;
+      }
+
+      .card[id] {
+        scroll-margin-top: 120px;
+      }
+
+      main {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 32px 20px 60px;
+        display: grid;
+        gap: 28px;
+      }
+
+      header {
+        display: grid;
+        gap: 10px;
+        padding: 18px 22px;
+        border-radius: 22px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.8));
+        box-shadow: var(--shadow);
+        animation: rise 600ms ease both;
+      }
+
+      header h1 {
+        margin: 0;
+        font-size: clamp(1.8rem, 3vw, 2.6rem);
+        letter-spacing: 0.02em;
+      }
+
+      header p {
+        margin: 0;
+        font-size: 1rem;
+        opacity: 0.75;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 20px;
+      }
+
+      .card {
+        background: var(--card);
+        border-radius: 20px;
+        padding: 20px;
+        box-shadow: var(--shadow);
+        border: 1px solid rgba(26, 158, 154, 0.12);
+        animation: rise 650ms ease both;
+        animation-delay: var(--delay, 0ms);
+      }
+
+      .card h2 {
+        margin: 0 0 8px;
+        font-size: 1.3rem;
+      }
+
+      .card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 8px;
+      }
+
+      .card-header h2 {
+        margin: 0;
+      }
+
+      .card-hero {
+        width: 64px;
+        height: 64px;
+        object-fit: contain;
+        filter: drop-shadow(0 10px 16px rgba(15, 36, 45, 0.15));
+      }
+
+      .card p {
+        margin: 0 0 16px;
+        font-size: 0.96rem;
+        opacity: 0.7;
+      }
+
+      .ride-list,
+      .sequence-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: grid;
+        gap: 12px;
+      }
+
+      .ride {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 14px;
+        align-items: center;
+        padding: 12px 14px;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.85);
+        border: 1px solid rgba(15, 36, 45, 0.06);
+        transition: transform 150ms ease, box-shadow 150ms ease;
+      }
+
+      .ride:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 18px rgba(15, 36, 45, 0.08);
+      }
+
+      .ride-name {
+        font-weight: 700;
+        font-size: 1rem;
+      }
+
+      .ride-note {
+        font-size: 0.9rem;
+        opacity: 0.75;
+      }
+
+      .status-toggle,
+      .step-toggle,
+      .reset-button {
+        border: none;
+        border-radius: 999px;
+        padding: 8px 14px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 150ms ease, box-shadow 150ms ease, background 150ms ease;
+      }
+
+      .status-toggle:focus-visible,
+      .step-toggle:focus-visible,
+      .reset-button:focus-visible {
+        outline: 2px solid var(--lagoon);
+        outline-offset: 2px;
+      }
+
+      .ride[data-state="ready"] .status-toggle,
+      .sequence-step[data-state="ready"] .step-toggle {
+        background: rgba(26, 158, 154, 0.16);
+        color: var(--lagoon);
+      }
+
+      .ride[data-state="done"] .status-toggle,
+      .sequence-step[data-state="done"] .step-toggle {
+        background: rgba(27, 77, 62, 0.12);
+        color: #1b4d3e;
+      }
+
+      .ride[data-state="skip"] .status-toggle,
+      .sequence-step[data-state="skip"] .step-toggle {
+        background: rgba(255, 111, 97, 0.16);
+        color: #b3443a;
+      }
+
+      .ride[data-state="skip"] {
+        opacity: 0.7;
+      }
+
+      .status-toggle:hover,
+      .step-toggle:hover,
+      .reset-button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 16px rgba(15, 36, 45, 0.12);
+      }
+
+      .status-hint {
+        font-size: 0.85rem;
+        opacity: 0.65;
+        margin-top: 12px;
+      }
+
+      .sequence {
+        display: grid;
+        gap: 16px;
+      }
+
+      .sequence-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      .sequence-progress {
+        flex: 1;
+        height: 10px;
+        border-radius: 999px;
+        background: rgba(26, 158, 154, 0.2);
+        overflow: hidden;
+      }
+
+      .sequence-progress span {
+        display: block;
+        height: 100%;
+        width: 0;
+        background: linear-gradient(90deg, var(--ocean), var(--coral));
+        transition: width 220ms ease;
+      }
+
+      .sequence-step {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 12px;
+        align-items: center;
+        padding: 12px 14px;
+        border-radius: 14px;
+        border: 1px solid rgba(15, 36, 45, 0.06);
+        background: rgba(255, 255, 255, 0.85);
+      }
+
+      .step-index {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: rgba(255, 179, 71, 0.35);
+        display: grid;
+        place-items: center;
+        font-weight: 700;
+        color: #7a4b00;
+      }
+
+      .step-title {
+        font-weight: 700;
+      }
+
+      .step-tag {
+        font-size: 0.82rem;
+        opacity: 0.7;
+      }
+
+      .notes textarea {
+        width: 100%;
+        min-height: 120px;
+        border-radius: 14px;
+        border: 1px solid rgba(15, 36, 45, 0.1);
+        padding: 12px 14px;
+        font-family: "Trebuchet MS", sans-serif;
+        font-size: 0.95rem;
+        background: rgba(255, 255, 255, 0.9);
+        resize: vertical;
+      }
+
+      .footer-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .checklist-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: grid;
+        gap: 10px;
+      }
+
+      .checklist-item {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 12px;
+        align-items: center;
+        padding: 10px 12px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.85);
+        border: 1px solid rgba(15, 36, 45, 0.06);
+      }
+
+      .checklist-item label {
+        font-weight: 600;
+      }
+
+      .checklist-empty {
+        font-size: 0.9rem;
+        opacity: 0.65;
+      }
+
+      .checklist-status {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        padding: 4px 8px;
+        border-radius: 999px;
+        background: rgba(26, 158, 154, 0.14);
+        color: var(--lagoon);
+      }
+
+      .checklist-status.skip {
+        background: rgba(255, 111, 97, 0.18);
+        color: #9b3a31;
+      }
+
+      .map-link {
+        display: block;
+        border-radius: 18px;
+        overflow: hidden;
+        border: 1px solid rgba(15, 36, 45, 0.08);
+        box-shadow: 0 14px 28px rgba(15, 36, 45, 0.12);
+        transition: transform 160ms ease, box-shadow 160ms ease;
+      }
+
+      .map-link:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 18px 32px rgba(15, 36, 45, 0.16);
+      }
+
+      .map-link img {
+        width: 100%;
+        display: block;
+        object-fit: cover;
+      }
+
+      .reset-button {
+        background: rgba(255, 111, 97, 0.2);
+        color: #a03d33;
+      }
+
+      .last-saved {
+        font-size: 0.82rem;
+        opacity: 0.6;
+      }
+
+      @keyframes rise {
+        from {
+          opacity: 0;
+          transform: translateY(14px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @media (max-width: 720px) {
+        .sequence-header {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .sequence-progress {
+          width: 100%;
+        }
+
+        .sequence-step {
+          grid-template-columns: auto 1fr;
+        }
+
+        .sequence-step .step-toggle {
+          grid-column: 1 / -1;
+          justify-self: flex-start;
+        }
+
+        .checklist-item {
+          grid-template-columns: auto 1fr;
+        }
+
+        .checklist-item .checklist-status {
+          justify-self: flex-start;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <div class="nav-inner">
+        <div class="nav-title">Kalahari Day Tracker</div>
+        <div class="nav-links">
+          <a href="#no-zone">No Zone</a>
+          <a href="#borderline">Borderline</a>
+          <a href="#yes-tier">Yes Tier</a>
+          <a href="#schedule">Schedule</a>
+          <a href="#checklist">Checklist</a>
+          <a href="#map">Map</a>
+        </div>
+      </div>
+    </nav>
+    <main>
+      <header>
+        <h1>Kalahari Waterslide Day</h1>
+        <p>Tap a status pill to cycle Ready - Done - Skipped. Everything saves locally on this device.</p>
+      </header>
+
+      <section class="grid">
+        <div class="card" id="no-zone" style="--delay: 80ms">
+          <div class="card-header">
+            <h2>Hard No Zone</h2>
+            <img class="card-hero" src="no.gif" alt="No zone mascot" />
+          </div>
+          <p>Skip without guilt.</p>
+          <ul class="ride-list">
+            <li class="ride" data-ride="Tanzanian Twister" data-default="ready">
+              <div>
+                <div class="ride-name">Tanzanian Twister</div>
+                <div class="ride-note">Pure vertical energy. Basically a controlled betrayal.</div>
+              </div>
+              <button class="status-toggle" type="button" aria-label="Toggle status for Tanzanian Twister"></button>
+            </li>
+            <li class="ride" data-ride="Zimbabwe Zipper" data-default="ready">
+              <div>
+                <div class="ride-name">Zimbabwe Zipper</div>
+                <div class="ride-note">Near free fall. Not character building - character destroying.</div>
+              </div>
+              <button class="status-toggle" type="button" aria-label="Toggle status for Zimbabwe Zipper"></button>
+            </li>
+            <li class="ride" data-ride="Sahara Sidewinder" data-default="ready">
+              <div>
+                <div class="ride-name">Sahara Sidewinder</div>
+                <div class="ride-note">Big funnel drop - stomach in throat moment.</div>
+              </div>
+              <button class="status-toggle" type="button" aria-label="Toggle status for Sahara Sidewinder"></button>
+            </li>
+            <li class="ride" data-ride="Screaming Hyena" data-default="ready">
+              <div>
+                <div class="ride-name">Screaming Hyena</div>
+                <div class="ride-note">Drop capsule nonsense. Dad curiosity noted.</div>
+              </div>
+              <button class="status-toggle" type="button" aria-label="Toggle status for Screaming Hyena"></button>
+            </li>
+            <li class="ride" data-ride="Anaconda" data-default="ready">
+              <div>
+                <div class="ride-name">Anaconda</div>
+                <div class="ride-note">Water coaster with a tailbone tax.</div>
+              </div>
+              <button class="status-toggle" type="button" aria-label="Toggle status for Anaconda"></button>
+            </li>
+          </ul>
+        </div>
+
+        <div class="card" id="borderline" style="--delay: 160ms">
+          <div class="card-header">
+            <h2>Borderline / Mood Check</h2>
+            <img class="card-hero" src="maybe.gif" alt="Borderline mood check" />
+          </div>
+          <p>Try only if the vibe is right.</p>
+          <ul class="ride-list">
+            <li class="ride" data-ride="VR Waterslide" data-default="ready">
+              <div>
+                <div class="ride-name">VR Waterslide</div>
+                <div class="ride-note">Physically tame, psychologically chaotic. Try once only.</div>
+              </div>
+              <button class="status-toggle" type="button" aria-label="Toggle status for VR Waterslide"></button>
+            </li>
+            <li class="ride" data-ride="Cheetah Racers" data-default="ready">
+              <div>
+                <div class="ride-name">Cheetah Racers</div>
+                <div class="ride-note">Dark + enclosed + fast. Skip unless she asks.</div>
+              </div>
+              <button class="status-toggle" type="button" aria-label="Toggle status for Cheetah Racers"></button>
+            </li>
+            <li class="ride" data-ride="Barreling Baboon" data-default="ready">
+              <div>
+                <div class="ride-name">Barreling Baboon</div>
+                <div class="ride-note">One real dip, then joyful swinging chaos.</div>
+              </div>
+              <button class="status-toggle" type="button" aria-label="Toggle status for Barreling Baboon"></button>
+            </li>
+          </ul>
+        </div>
+
+        <div class="card" id="yes-tier" style="--delay: 240ms">
+          <div class="card-header">
+            <h2>Awww Yiss Tier</h2>
+            <img class="card-hero" src="yes.png" alt="Yes tier celebration" />
+          </div>
+          <p>Fast, twisty, visually open. Prime Ava energy.</p>
+          <ul class="ride-list">
+            <li class="ride" data-ride="Smoke That Thunders" data-default="ready">
+              <div>
+                <div class="ride-name">Smoke That Thunders</div>
+                <div class="ride-note">Speed + curves + open feel. Elite confidence boost.</div>
+              </div>
+              <button class="status-toggle" type="button" aria-label="Toggle status for Smoke That Thunders"></button>
+            </li>
+            <li class="ride" data-ride="Serengeti Safari Adventure" data-default="ready">
+              <div>
+                <div class="ride-name">Serengeti Safari Adventure</div>
+                <div class="ride-note">Twists into a bowl without terror drops.</div>
+              </div>
+              <button class="status-toggle" type="button" aria-label="Toggle status for Serengeti Safari Adventure"></button>
+            </li>
+            <li class="ride" data-ride="Elephant's Trunk" data-default="ready">
+              <div>
+                <div class="ride-name">Elephant's Trunk</div>
+                <div class="ride-note">The plot twist ride. Keep it in the loop.</div>
+              </div>
+              <button class="status-toggle" type="button" aria-label="Toggle status for Elephant's Trunk"></button>
+            </li>
+            <li class="ride" data-ride="Victoria Falls" data-default="ready">
+              <div>
+                <div class="ride-name">Victoria Falls</div>
+                <div class="ride-note">Smooth family raft vibes. Council approved.</div>
+              </div>
+              <button class="status-toggle" type="button" aria-label="Toggle status for Victoria Falls"></button>
+            </li>
+            <li class="ride" data-ride="Kenya Korkscrew" data-default="ready">
+              <div>
+                <div class="ride-name">Kenya Korkscrew</div>
+                <div class="ride-note">Fast but not soul threatening.</div>
+              </div>
+              <button class="status-toggle" type="button" aria-label="Toggle status for Kenya Korkscrew"></button>
+            </li>
+            <li class="ride" data-ride="Rippling Rhino" data-default="ready">
+              <div>
+                <div class="ride-name">Rippling Rhino</div>
+                <div class="ride-note">Surprisingly fun, not scary.</div>
+              </div>
+              <button class="status-toggle" type="button" aria-label="Toggle status for Rippling Rhino"></button>
+            </li>
+            <li class="ride" data-ride="Zig Zag Zebra" data-default="ready">
+              <div>
+                <div class="ride-name">Zig Zag Zebra</div>
+                <div class="ride-note">Clean, safe win. The opener.</div>
+              </div>
+              <button class="status-toggle" type="button" aria-label="Toggle status for Zig Zag Zebra"></button>
+            </li>
+          </ul>
+          <div class="status-hint">Tip: Ready is your default. Tap to mark Done or Skipped.</div>
+        </div>
+      </section>
+
+      <section class="card sequence" id="schedule" style="--delay: 320ms">
+        <div class="sequence-header">
+          <div>
+            <h2>Perfect Day Sequence</h2>
+            <p>Check off the flow as you go.</p>
+          </div>
+          <div class="sequence-progress" aria-hidden="true">
+            <span id="sequence-progress-bar"></span>
+          </div>
+        </div>
+        <ul class="sequence-list" id="sequence-list">
+          <li class="sequence-step" data-step="Zig Zag Zebra" data-default="ready">
+            <div class="step-index">1</div>
+            <div>
+              <div class="step-title">Zig Zag Zebra</div>
+              <div class="step-tag">Warm-up</div>
+            </div>
+            <button class="step-toggle" type="button" aria-label="Toggle status for Zig Zag Zebra"></button>
+          </li>
+          <li class="sequence-step" data-step="Rippling Rhino" data-default="ready">
+            <div class="step-index">2</div>
+            <div>
+              <div class="step-title">Rippling Rhino</div>
+              <div class="step-tag">Warm-up</div>
+            </div>
+            <button class="step-toggle" type="button" aria-label="Toggle status for Rippling Rhino"></button>
+          </li>
+          <li class="sequence-step" data-step="Kenya Korkscrew" data-default="ready">
+            <div class="step-index">3</div>
+            <div>
+              <div class="step-title">Kenya Korkscrew</div>
+              <div class="step-tag">Warm-up</div>
+            </div>
+            <button class="step-toggle" type="button" aria-label="Toggle status for Kenya Korkscrew"></button>
+          </li>
+          <li class="sequence-step" data-step="Smoke That Thunders" data-default="ready">
+            <div class="step-index">4</div>
+            <div>
+              <div class="step-title">Smoke That Thunders</div>
+              <div class="step-tag">Peak hour joy</div>
+            </div>
+            <button class="step-toggle" type="button" aria-label="Toggle status for Smoke That Thunders"></button>
+          </li>
+          <li class="sequence-step" data-step="Serengeti Safari Adventure" data-default="ready">
+            <div class="step-index">5</div>
+            <div>
+              <div class="step-title">Serengeti Safari Adventure</div>
+              <div class="step-tag">Peak hour joy</div>
+            </div>
+            <button class="step-toggle" type="button" aria-label="Toggle status for Serengeti Safari Adventure"></button>
+          </li>
+          <li class="sequence-step" data-step="Elephant's Trunk" data-default="ready">
+            <div class="step-index">6</div>
+            <div>
+              <div class="step-title">Elephant's Trunk</div>
+              <div class="step-tag">Peak hour joy</div>
+            </div>
+            <button class="step-toggle" type="button" aria-label="Toggle status for Elephant's Trunk"></button>
+          </li>
+          <li class="sequence-step" data-step="Victoria Falls" data-default="ready">
+            <div class="step-index">7</div>
+            <div>
+              <div class="step-title">Victoria Falls</div>
+              <div class="step-tag">Peak hour joy</div>
+            </div>
+            <button class="step-toggle" type="button" aria-label="Toggle status for Victoria Falls"></button>
+          </li>
+          <li class="sequence-step" data-step="Barreling Baboon" data-default="ready">
+            <div class="step-index">8</div>
+            <div>
+              <div class="step-title">Barreling Baboon</div>
+              <div class="step-tag">Bravery check</div>
+            </div>
+            <button class="step-toggle" type="button" aria-label="Toggle status for Barreling Baboon"></button>
+          </li>
+          <li class="sequence-step" data-step="Screaming Hyena" data-default="ready">
+            <div class="step-index">9</div>
+            <div>
+              <div class="step-title">Screaming Hyena</div>
+              <div class="step-tag">Dad chaos slot</div>
+            </div>
+            <button class="step-toggle" type="button" aria-label="Toggle status for Screaming Hyena"></button>
+          </li>
+        </ul>
+      </section>
+
+      <section class="card" id="checklist" style="--delay: 360ms">
+        <h2>Checklist</h2>
+        <p>Everything you've done or intentionally skipped.</p>
+        <ul class="checklist-list" id="checklist-list"></ul>
+      </section>
+
+      <section class="card" id="map" style="--delay: 380ms">
+        <h2>Map</h2>
+        <p>Tap the map to open the full PDF.</p>
+        <a class="map-link" href="waterpark-map.pdf">
+          <img src="waterpark-map.png" alt="Waterpark map preview" />
+        </a>
+      </section>
+
+      <section class="card notes" style="--delay: 400ms">
+        <h2>Notes</h2>
+        <p>Quick wins, surprise favorites, or snack breaks.</p>
+        <textarea id="notes" placeholder="Type anything you want to remember..."></textarea>
+      </section>
+
+      <section class="card" style="--delay: 460ms">
+        <div class="footer-actions">
+          <button class="reset-button" type="button" id="reset">Reset day</button>
+          <div class="last-saved" id="last-saved">Not saved yet</div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const states = ["ready", "done", "skip"];
+      const stateLabels = {
+        ready: "Ready",
+        done: "Done",
+        skip: "Skipped",
+      };
+
+      const rideElements = document.querySelectorAll(".ride");
+      const stepElements = document.querySelectorAll(".sequence-step");
+      const checklistList = document.getElementById("checklist-list");
+      const notes = document.getElementById("notes");
+      const resetButton = document.getElementById("reset");
+      const lastSaved = document.getElementById("last-saved");
+      const progressBar = document.getElementById("sequence-progress-bar");
+
+      const storageKey = (prefix, name) => `kalahari-${prefix}-${name}`;
+
+      const getName = (element) => element.dataset.ride || element.dataset.step;
+      const getPrefix = (element) => (element.dataset.ride ? "ride" : "step");
+
+      const elementsByName = new Map();
+      const orderedNames = [];
+
+      const registerElements = (elements) => {
+        elements.forEach((element) => {
+          const name = getName(element);
+          if (!elementsByName.has(name)) {
+            elementsByName.set(name, []);
+          }
+          elementsByName.get(name).push(element);
+        });
+      };
+
+      const buildOrder = () => {
+        const seen = new Set();
+        document.querySelectorAll(".ride, .sequence-step").forEach((element) => {
+          const name = getName(element);
+          if (!seen.has(name)) {
+            orderedNames.push(name);
+            seen.add(name);
+          }
+        });
+      };
+
+      const setState = (element, state) => {
+        element.dataset.state = state;
+        const button = element.querySelector("button");
+        if (button) {
+          button.textContent = stateLabels[state];
+        }
+      };
+
+      const resolveSavedState = (name, fallbackState) => {
+        const rideSaved = localStorage.getItem(storageKey("ride", name));
+        const stepSaved = localStorage.getItem(storageKey("step", name));
+        return rideSaved || stepSaved || fallbackState;
+      };
+
+      const updateProgress = () => {
+        if (!progressBar) return;
+        const total = stepElements.length;
+        const doneCount = Array.from(stepElements).filter((step) => step.dataset.state === "done").length;
+        const percent = total ? Math.round((doneCount / total) * 100) : 0;
+        progressBar.style.width = `${percent}%`;
+      };
+
+      const updateChecklist = () => {
+        if (!checklistList) return;
+        checklistList.innerHTML = "";
+        let hasItems = false;
+        orderedNames.forEach((name) => {
+          const elements = elementsByName.get(name);
+          if (!elements || !elements.length) return;
+          const state = elements[0].dataset.state;
+          if (state !== "done" && state !== "skip") return;
+          hasItems = true;
+
+          const item = document.createElement("li");
+          item.className = "checklist-item";
+
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.checked = state === "done";
+          checkbox.id = `check-${name.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}`;
+          checkbox.addEventListener("change", () => {
+            applyStateForName(name, checkbox.checked ? "done" : "skip");
+          });
+
+          const label = document.createElement("label");
+          label.setAttribute("for", checkbox.id);
+          label.textContent = name;
+
+          const status = document.createElement("span");
+          status.className = `checklist-status ${state === "skip" ? "skip" : ""}`.trim();
+          status.textContent = state === "done" ? "Done" : "Skipped";
+
+          item.append(checkbox, label, status);
+          checklistList.append(item);
+        });
+        if (!hasItems) {
+          const emptyItem = document.createElement("li");
+          emptyItem.className = "checklist-empty";
+          emptyItem.textContent = "No rides marked yet.";
+          checklistList.append(emptyItem);
+        }
+      };
+
+      const stampSaved = () => {
+        const now = new Date();
+        const time = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        lastSaved.textContent = `Saved at ${time}`;
+      };
+
+      const applyStateForName = (name, state) => {
+        const elements = elementsByName.get(name) || [];
+        elements.forEach((element) => {
+          localStorage.setItem(storageKey(getPrefix(element), name), state);
+          setState(element, state);
+        });
+        updateProgress();
+        updateChecklist();
+        stampSaved();
+      };
+
+      const toggleState = (element) => {
+        const current = element.dataset.state;
+        const next = states[(states.indexOf(current) + 1) % states.length];
+        applyStateForName(getName(element), next);
+      };
+
+      registerElements(rideElements);
+      registerElements(stepElements);
+      buildOrder();
+
+      elementsByName.forEach((elements, name) => {
+        const defaultState = elements[0].dataset.default || "ready";
+        const resolvedState = resolveSavedState(name, defaultState);
+        elements.forEach((element) => setState(element, resolvedState));
+      });
+
+      rideElements.forEach((ride) => {
+        ride.querySelector(".status-toggle").addEventListener("click", () => {
+          toggleState(ride);
+        });
+      });
+
+      stepElements.forEach((step) => {
+        step.querySelector(".step-toggle").addEventListener("click", () => {
+          toggleState(step);
+        });
+      });
+
+      notes.value = localStorage.getItem("kalahari-notes") || "";
+      notes.addEventListener("input", () => {
+        localStorage.setItem("kalahari-notes", notes.value);
+        stampSaved();
+      });
+
+      resetButton.addEventListener("click", () => {
+        const confirmed = window.confirm("Reset all statuses and notes for today?");
+        if (!confirmed) return;
+        rideElements.forEach((ride) => {
+          localStorage.removeItem(storageKey("ride", ride.dataset.ride));
+        });
+        stepElements.forEach((step) => {
+          localStorage.removeItem(storageKey("step", step.dataset.step));
+        });
+        elementsByName.forEach((elements) => {
+          const defaultState = elements[0].dataset.default || "ready";
+          elements.forEach((element) => setState(element, defaultState));
+        });
+        localStorage.removeItem("kalahari-notes");
+        notes.value = "";
+        updateProgress();
+        updateChecklist();
+        lastSaved.textContent = "Reset done";
+      });
+
+      updateProgress();
+      updateChecklist();
+      if (notes.value) {
+        stampSaved();
+      }
+    </script>
+  </body>
+</html>
